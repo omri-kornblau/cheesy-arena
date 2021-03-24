@@ -7,7 +7,6 @@ package field
 
 import (
 	"fmt"
-	"github.com/Team254/cheesy-arena/websocket"
 	"net/url"
 	"reflect"
 	"sort"
@@ -15,6 +14,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/Team254/cheesy-arena/websocket"
 )
 
 const (
@@ -30,6 +31,7 @@ const (
 	AllianceStationDisplay
 	AnnouncerDisplay
 	AudienceDisplay
+	AudienceLiteDisplay
 	FieldMonitorDisplay
 	PitDisplay
 	QueueingDisplay
@@ -41,6 +43,7 @@ var DisplayTypeNames = map[DisplayType]string{
 	AllianceStationDisplay: "Alliance Station",
 	AnnouncerDisplay:       "Announcer",
 	AudienceDisplay:        "Audience",
+	AudienceLiteDisplay:    "AudienceLiteDisplay",
 	FieldMonitorDisplay:    "Field Monitor",
 	PitDisplay:             "Pit",
 	QueueingDisplay:        "Queueing",
@@ -52,6 +55,7 @@ var displayTypePaths = map[DisplayType]string{
 	AllianceStationDisplay: "/displays/alliance_station",
 	AnnouncerDisplay:       "/displays/announcer",
 	AudienceDisplay:        "/displays/audience",
+	AudienceLiteDisplay:    "/displays/liteAudience",
 	FieldMonitorDisplay:    "/displays/field_monitor",
 	PitDisplay:             "/displays/pit",
 	QueueingDisplay:        "/displays/queueing",
