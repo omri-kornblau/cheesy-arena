@@ -83,6 +83,7 @@ var handleMatchTime = function(data) {
 
 // Handles a websocket message to update the match score.
 var handleRealtimeScore = function(data) {
+  console.log(data);
   $("#" + redSide + "ScoreNumber").text(data.Red.ScoreSummary.Score - data.Red.ScoreSummary.EndgamePoints);
   $("#" + blueSide + "ScoreNumber").text(data.Blue.ScoreSummary.Score - data.Blue.ScoreSummary.EndgamePoints);
 
@@ -91,6 +92,12 @@ var handleRealtimeScore = function(data) {
     setPowerCellText($("#" + redSide + "Stage" + i1), data.Red.ScoreSummary, i);
     setPowerCellText($("#" + blueSide + "Stage" + i1), data.Blue.ScoreSummary, i);
   }
+};
+
+// Handles a websocket massage to update the remaining powercells in stage 1
+var handleRealtimePowercellsToStageOne = function(data) {
+  $("#" + redSide + "powercellsRemaining").text(data.Red.scoreSummary.StagePowerCellsRemaining[0]);
+  $("#" + blueSide + "powercellsRemaining").text(data.Blue.scoreSummary.StagePowerCellsRemaining[0]);
 };
 
 // Handles a websocket message to populate the final score data.
@@ -472,14 +479,18 @@ var getAvatarUrl = function(teamId) {
 
 // Populates the given element on the overlay to represent the given power cell stage.
 var setPowerCellText = function(element, scoreSummary, stage) {
-  var text = "&nbsp;";
+  var text = ("&nbsp;");
   var opacity = 1;
+  console.log(scoreSummary.StagesActivated);
   if (scoreSummary.StagesActivated[stage]) {
     text = "I".repeat(stage + 1);
     opacity = 0.4;
   } else if (stage === 0 || scoreSummary.StagesActivated[stage - 1]) {
     text = scoreSummary.StagePowerCellsRemaining[stage];
   }
+
+  console.log("stage, text ", stage, text);
+
   element.html(text);
   element.css("opacity", opacity);
 };
