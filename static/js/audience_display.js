@@ -93,12 +93,6 @@ var handleRealtimeScore = function(data) {
   }
 };
 
-// Handles a websocket massage to update the remaining powercells in stage 1
-var handleRealtimePowercellsToStageOne = function(data) {
-  $("#" + redSide + "powercellsRemaining").text(data.Red.scoreSummary.StagePowerCellsRemaining[0]);
-  $("#" + blueSide + "powercellsRemaining").text(data.Blue.scoreSummary.StagePowerCellsRemaining[0]);
-};
-
 // Handles a websocket message to populate the final score data.
 var handleScorePosted = function(data) {
   $("#" + redSide + "FinalScore").text(data.RedScoreSummary.Score);
@@ -486,7 +480,6 @@ var setPowerCellText = function(element, scoreSummary, stage) {
   } else if (stage === 0 || scoreSummary.StagesActivated[stage - 1]) {
     text = scoreSummary.StagePowerCellsRemaining[stage];
   }
-
   element.html(text);
   element.css("opacity", opacity);
 };
