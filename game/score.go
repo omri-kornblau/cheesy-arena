@@ -93,6 +93,14 @@ func (score *Score) Summarize(opponentFouls []Foul, teleopStarted bool) *ScoreSu
 	}
 	summary.AutoPoints = summary.InitiationLinePoints + summary.AutoPowerCellPoints
 
+	for i := 0; i < 3; i++ {
+		currentStage := Stage(i)
+		summary.StagePowerCellsRemaining[i] = StageCapacities[currentStage] - score.stagePowerCells(currentStage)
+		if summary.StagePowerCellsRemaining[i] < 0 {
+			summary.StagePowerCellsRemaining[i] = 0
+		}
+	}
+
 	// Calculate teleoperated period power cell points.
 	for i := 0; i < len(score.TeleopCellsBottom); i++ {
 		summary.TotalCells += score.TeleopCellsBottom[i]
@@ -109,6 +117,10 @@ func (score *Score) Summarize(opponentFouls []Foul, teleopStarted bool) *ScoreSu
 	// Calculate control panel points and stages.
 	if summary.TotalCells >= 40 {
 		summary.ControlPanelRankingPoint = true
+	}
+
+	for i := 0; i < 3; i++ {
+		summary.StagesActivated[i] = score.stageActivated(Stage(i), teleopStarted)
 	}
 
 	// Calculate endgame points.
