@@ -51,6 +51,12 @@ html {
 .reversible-left[data-reversed=true], .reversible-right[data-reversed=false] {
   background-color: #2080ff;
 }
+#leftScoreNumber {
+  margin-left: 300px;
+}
+#rightScoreNumber {
+  margin-right: 300px;
+}
 .score {
   width: 0;
   height: 100vh;
@@ -58,6 +64,7 @@ html {
   justify-content: flex-start;
 }
 .score-right {
+  /* margin-right: 200px; */
   justify-content: flex-end;
 }
 .avatars {
@@ -78,9 +85,10 @@ html {
   justify-content: center;
   align-items: center;
   font-family: "FuturaLTBold";
-  font-size: 400px;
+  font-size: 350px;
   color: #fff;
   opacity: 0;
+  margin-top: 100px;
 }
 .score-fields {
   height: 100%;
@@ -111,11 +119,11 @@ html {
 }
 #matchTime {
   position: relative;
-  top: 1px;
+  top: 110px;
   height: 60px;
   color: #222;
   font-family: "FuturaLTBold";
-  font-size: 100px;
+  font-size: 150px;
   opacity: 0;
 }
 #eventMatchInfo {

@@ -23,12 +23,12 @@ var overlayCenteringTopHideParams = {queue: false, top: overlayCenteringTopUp};
 var overlayCenteringTopShowParams = {queue: false, top: "40px"};
 var eventMatchInfoDown = "50px";
 var eventMatchInfoUp = $("#eventMatchInfo").css("height");
-var logoUp = "30px";
+var logoUp = "80px";
 var logoDown = $("#logo").css("top");
 var scoreIn = $(".score").css("width");
-var scoreMid = "280px";
-var scoreOut = "600px";
-var scoreFieldsOut = "60px";
+var scoreMid = "200px";
+var scoreOut = "800px";
+var scoreFieldsOut = "100px";
 
 // Handles a websocket message to change which screen is displayed.
 var handleAudienceDisplayMode = function(targetScreen) {
