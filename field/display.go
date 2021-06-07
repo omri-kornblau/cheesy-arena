@@ -32,6 +32,7 @@ const (
 	AnnouncerDisplay
 	AudienceDisplay
 	AudienceLiteDisplay
+	DriversDisplay
 	FieldMonitorDisplay
 	PitDisplay
 	QueueingDisplay
@@ -44,6 +45,7 @@ var DisplayTypeNames = map[DisplayType]string{
 	AnnouncerDisplay:       "Announcer",
 	AudienceDisplay:        "Audience",
 	AudienceLiteDisplay:    "AudienceLiteDisplay",
+	DriversDisplay:         "DriversDisplay",
 	FieldMonitorDisplay:    "Field Monitor",
 	PitDisplay:             "Pit",
 	QueueingDisplay:        "Queueing",
@@ -56,6 +58,7 @@ var displayTypePaths = map[DisplayType]string{
 	AnnouncerDisplay:       "/displays/announcer",
 	AudienceDisplay:        "/displays/audience",
 	AudienceLiteDisplay:    "/displays/liteAudience",
+	DriversDisplay:         "/displays/drivers",
 	FieldMonitorDisplay:    "/displays/field_monitor",
 	PitDisplay:             "/displays/pit",
 	QueueingDisplay:        "/displays/queueing",

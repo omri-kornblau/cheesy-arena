@@ -1,0 +1,313 @@
+goose: no migrations to run. current version: 20190819192917
+2021/06/07 18:47:38 Failed to configure admin WiFi: dial tcp :22: i/o timeout
+2021/06/07 18:47:38 Serving HTTP requests on port 8080
+2021/06/07 18:47:38 Listening for driver stations on TCP port 1750
+2021/06/07 18:47:38 Listening for driver stations on UDP port 1160
+2021/06/07 18:47:43 Error configuring WiFi: Error getting wifi info from AP: Could not parse wifi info; expected 6 team networks, got 2.
+2021/06/07 18:47:43 WiFi configuration still incorrect after 1 attempts; trying again.
+2021/06/07 18:47:49 Successfully configured WiFi after 2 attempts.
+Failed to configure team WiFi: Invalid WPA key '' configured for team 2059.Failed to configure team WiFi: Invalid WPA key '' configured for team 2059.Failed to configure team WiFi: Invalid WPA key '' configured for team 2059.2021/06/07 19:42:16 Failed to configure admin WiFi: dial tcp :22: i/o timeout
+2021/06/07 19:47:10 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 19:47:10 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 19:47:11 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 19:47:11 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 19:47:11 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 19:47:11 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 19:47:12 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 19:47:12 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 19:47:12 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 19:47:12 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 19:47:13 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 19:47:13 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 19:47:13 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 19:47:13 [match_play.go:185] Websocket read error: read tcp 10.0.100.5:8080->10.0.100.106:1202: wsarecv: A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+Failed to configure team WiFi: Invalid WPA key '' configured for team 2059.Failed to configure team WiFi: Invalid WPA key '' configured for team 2059.Failed to configure team WiFi: Invalid WPA key '' configured for team 2069.Failed to configure team WiFi: Invalid WPA key '' configured for team 2069.Failed to configure team WiFi: Invalid WPA key '' configured for team 2069.Failed to configure team WiFi: Invalid WPA key '' configured for team 2069.2021/06/07 19:55:51 Error configuring WiFi: Error getting wifi info from AP: Could not parse wifi info; expected 6 team networks, got 2.
+2021/06/07 19:55:51 WiFi configuration still incorrect after 1 attempts; trying again.
+2021/06/07 19:55:56 Successfully configured WiFi after 2 attempts.
+2021/06/07 19:59:29 Accepting connection from Team 2096 in station R2.
+2021/06/07 19:59:29 Driver station for Team 2096 connected from 10.20.96.101
+2021/06/07 20:02:58 Error reading from connection for Team 2096: read tcp 10.0.100.5:1750->10.20.96.101:52676: use of closed network connection
+2021/06/07 20:03:04 Error configuring WiFi: Error getting wifi info from AP: Could not parse wifi info; expected 6 team networks, got 2.
+2021/06/07 20:03:04 WiFi configuration still incorrect after 1 attempts; trying again.
+2021/06/07 20:03:09 Successfully configured WiFi after 2 attempts.
+2021/06/07 20:03:39 Error configuring WiFi: Error getting wifi info from AP: Could not parse wifi info; expected 6 team networks, got 2.
+2021/06/07 20:03:39 WiFi configuration still incorrect after 1 attempts; trying again.
+2021/06/07 20:03:45 Successfully configured WiFi after 2 attempts.
+2021/06/07 20:04:48 Accepting connection from Team 2096 in station R2.
+2021/06/07 20:04:48 Driver station for Team 2096 connected from 10.20.96.101
+2021/06/07 20:06:35 Error reading from connection for Team 2096: read tcp 10.0.100.5:1750->10.20.96.101:63865: i/o timeout
+2021/06/07 20:06:45 Accepting connection from Team 2096 in station R2.
+2021/06/07 20:06:45 Driver station for Team 2096 connected from 10.20.96.101
+2021/06/07 20:11:00 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:00 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:01 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:01 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:01 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:01 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:02 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:02 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:02 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:02 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:03 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:03 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:03 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:03 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:04 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:04 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:04 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:05 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:05 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:05 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:05 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:06 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:06 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:06 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:06 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:07 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:07 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:07 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:07 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:08 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:08 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:08 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:08 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:09 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:09 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:09 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:09 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:10 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:10 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:10 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:11 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:11 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:11 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:11 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:12 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:12 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:12 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:12 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:13 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:13 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:13 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:13 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:11:14 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:30 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:30 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:30 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:31 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:31 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:31 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:31 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:32 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:32 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:32 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:32 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:33 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:33 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:33 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:33 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:34 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:34 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:34 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:34 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:35 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:35 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:35 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:35 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:36 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:36 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:36 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:36 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:37 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:37 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:37 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:37 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:38 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:38 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:38 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:38 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:39 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:39 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:39 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:39 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:40 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:40 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:40 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:41 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:41 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:12:46 [scoring_panel.go:90] Websocket read error: read tcp 10.0.100.5:8080->10.0.100.107:49130: wsarecv: A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+2021/06/07 20:22:44 Error reading from connection for Team 2096: read tcp 10.0.100.5:1750->10.20.96.101:60385: use of closed network connection
+2021/06/07 20:22:44 Rejecting connection from Team 2096, who is not in the current match, soon.
+2021/06/07 20:22:45 Rejecting connection from Team 2096, who is not in the current match, soon.
+2021/06/07 20:22:54 Error configuring WiFi: WiFi SSH command timed out after 5 seconds
+2021/06/07 20:22:54 WiFi configuration still incorrect after 1 attempts; trying again.
+2021/06/07 20:23:00 Error configuring WiFi: dial tcp 10.0.100.3:22: i/o timeout
+2021/06/07 20:23:00 WiFi configuration still incorrect after 2 attempts; trying again.
+2021/06/07 20:23:06 Error configuring WiFi: dial tcp 10.0.100.3:22: i/o timeout
+2021/06/07 20:23:06 WiFi configuration still incorrect after 3 attempts; trying again.
+2021/06/07 20:23:12 Error configuring WiFi: dial tcp 10.0.100.3:22: i/o timeout
+2021/06/07 20:23:12 WiFi configuration still incorrect after 4 attempts; trying again.
+2021/06/07 20:23:18 Error configuring WiFi: dial tcp 10.0.100.3:22: i/o timeout
+2021/06/07 20:23:18 WiFi configuration still incorrect after 5 attempts; trying again.
+2021/06/07 20:23:24 Error configuring WiFi: dial tcp 10.0.100.3:22: i/o timeout
+2021/06/07 20:23:24 WiFi configuration still incorrect after 6 attempts; trying again.
+2021/06/07 20:23:30 Error configuring WiFi: dial tcp 10.0.100.3:22: i/o timeout
+2021/06/07 20:23:30 WiFi configuration still incorrect after 7 attempts; trying again.
+2021/06/07 20:23:40 Error configuring WiFi: WiFi SSH command timed out after 5 seconds
+2021/06/07 20:23:40 WiFi configuration still incorrect after 8 attempts; trying again.
+2021/06/07 20:23:46 Error configuring WiFi: dial tcp 10.0.100.3:22: i/o timeout
+2021/06/07 20:23:46 WiFi configuration still incorrect after 9 attempts; trying again.
+2021/06/07 20:23:52 Error configuring WiFi: dial tcp 10.0.100.3:22: i/o timeout
+2021/06/07 20:23:52 WiFi configuration still incorrect after 10 attempts; trying again.
+2021/06/07 20:23:58 Error configuring WiFi: dial tcp 10.0.100.3:22: i/o timeout
+2021/06/07 20:23:58 WiFi configuration still incorrect after 11 attempts; trying again.
+2021/06/07 20:24:04 Error configuring WiFi: dial tcp 10.0.100.3:22: i/o timeout
+2021/06/07 20:24:04 WiFi configuration still incorrect after 12 attempts; trying again.
+2021/06/07 20:24:10 Error configuring WiFi: dial tcp 10.0.100.3:22: i/o timeout
+2021/06/07 20:24:10 WiFi configuration still incorrect after 13 attempts; trying again.
+2021/06/07 20:24:16 Error configuring WiFi: dial tcp 10.0.100.3:22: i/o timeout
+2021/06/07 20:24:16 WiFi configuration still incorrect after 14 attempts; trying again.
+2021/06/07 20:24:26 Error configuring WiFi: WiFi SSH command timed out after 5 seconds
+2021/06/07 20:24:26 WiFi configuration still incorrect after 15 attempts; trying again.
+2021/06/07 20:24:32 Error configuring WiFi: dial tcp 10.0.100.3:22: i/o timeout
+2021/06/07 20:24:32 WiFi configuration still incorrect after 16 attempts; trying again.
+2021/06/07 20:24:38 Error configuring WiFi: dial tcp 10.0.100.3:22: i/o timeout
+2021/06/07 20:24:38 WiFi configuration still incorrect after 17 attempts; trying again.
+2021/06/07 20:24:44 Error configuring WiFi: dial tcp 10.0.100.3:22: i/o timeout
+2021/06/07 20:24:44 WiFi configuration still incorrect after 18 attempts; trying again.
+2021/06/07 20:24:50 Error configuring WiFi: dial tcp 10.0.100.3:22: i/o timeout
+2021/06/07 20:24:50 WiFi configuration still incorrect after 19 attempts; trying again.
+2021/06/07 20:24:56 Error configuring WiFi: dial tcp 10.0.100.3:22: i/o timeout
+2021/06/07 20:24:56 WiFi configuration still incorrect after 20 attempts; trying again.
+2021/06/07 20:25:02 Error configuring WiFi: dial tcp 10.0.100.3:22: i/o timeout
+2021/06/07 20:25:02 WiFi configuration still incorrect after 21 attempts; trying again.
+2021/06/07 20:25:13 Error configuring WiFi: WiFi SSH command timed out after 5 seconds
+2021/06/07 20:25:13 WiFi configuration still incorrect after 22 attempts; trying again.
+2021/06/07 20:25:19 Error configuring WiFi: dial tcp 10.0.100.3:22: i/o timeout
+2021/06/07 20:25:19 WiFi configuration still incorrect after 23 attempts; trying again.
+2021/06/07 20:25:25 Error configuring WiFi: dial tcp 10.0.100.3:22: i/o timeout
+2021/06/07 20:25:25 WiFi configuration still incorrect after 24 attempts; trying again.
+2021/06/07 20:25:25 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:25:25 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:25:25 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:25:25 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:25:26 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:25:26 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:25:26 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:25:26 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:25:27 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:25:27 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:25:27 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:25:27 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:25:28 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:25:28 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:25:29 [scoring_panel.go:90] Websocket read error: read tcp 10.0.100.5:8080->10.0.100.201:37752: wsarecv: A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+2021/06/07 20:25:31 Error configuring WiFi: dial tcp 10.0.100.3:22: i/o timeout
+2021/06/07 20:25:31 WiFi configuration still incorrect after 25 attempts; trying again.
+2021/06/07 20:25:37 Error configuring WiFi: dial tcp 10.0.100.3:22: i/o timeout
+2021/06/07 20:25:37 WiFi configuration still incorrect after 26 attempts; trying again.
+2021/06/07 20:25:43 Error configuring WiFi: dial tcp 10.0.100.3:22: i/o timeout
+2021/06/07 20:25:43 WiFi configuration still incorrect after 27 attempts; trying again.
+2021/06/07 20:25:49 Error configuring WiFi: dial tcp 10.0.100.3:22: i/o timeout
+2021/06/07 20:25:49 WiFi configuration still incorrect after 28 attempts; trying again.
+2021/06/07 20:25:54 Error configuring WiFi: Error getting wifi info from AP: Could not parse wifi info; expected 6 team networks, got 2.
+2021/06/07 20:25:54 WiFi configuration still incorrect after 29 attempts; trying again.
+2021/06/07 20:25:59 Successfully configured WiFi after 30 attempts.
+2021/06/07 20:27:12 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:27:13 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:27:13 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:27:13 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:27:13 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:27:14 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:27:14 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:27:14 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:27:14 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:27:15 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:27:15 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:27:15 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:30:57 [match_play.go:185] Websocket read error: read tcp 10.0.100.5:8080->10.0.100.103:54432: wsarecv: An existing connection was forcibly closed by the remote host.
+2021/06/07 20:30:57 [field_monitor_display.go:69] Websocket read error: read tcp 10.0.100.5:8080->10.0.100.103:59328: wsarecv: An existing connection was forcibly closed by the remote host.
+2021/06/07 20:35:52 [field_monitor_display.go:69] Websocket read error: read tcp 10.0.100.5:8080->10.0.100.111:47294: wsarecv: An existing connection was forcibly closed by the remote host.
+2021/06/07 20:38:31 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:38:31 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:38:31 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:38:32 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:38:32 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:38:32 [match_play.go:185] Websocket read error: read tcp 10.0.100.5:8080->10.0.100.103:62611: wsarecv: A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+2021/06/07 20:38:32 [field_monitor_display.go:69] Websocket read error: read tcp 10.0.100.5:8080->10.0.100.103:51823: wsarecv: A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+2021/06/07 20:41:20 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:41:20 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 20:41:23 [scoring_panel.go:90] Websocket read error: read tcp 10.0.100.5:8080->10.0.100.201:33490: wsarecv: A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+2021/06/07 20:41:26 [field_monitor_display.go:69] Websocket read error: read tcp 10.0.100.5:8080->10.0.100.111:47364: wsarecv: An existing connection was forcibly closed by the remote host.
+2021/06/07 20:41:51 HTTP request error: Invalid match type ''.
+2021/06/07 20:41:51 http: superfluous response.WriteHeader call from github.com/Team254/cheesy-arena/web.handleWebErr (web.go:196)
+2021/06/07 20:48:29 Error during startup:  invalid database
+2021/06/07 20:48:31 Error during startup:  invalid database
+2021/06/07 20:48:35 Error during startup:  invalid database
+2021/06/07 20:48:43 Error during startup:  invalid database
+2021/06/07 20:48:53 Error during startup:  invalid database
+2021/06/07 20:48:55 Error during startup:  invalid database
+2021/06/07 20:48:59 Error during startup:  invalid database
+2021/06/07 20:49:08 Error during startup:  invalid database
+2021/06/07 20:49:24 Error during startup:  invalid database
+2021/06/07 20:49:56 Error during startup:  invalid database
+2021/06/07 20:51:00 Serving HTTP requests on port 8080
+2021/06/07 20:51:00 Listening for driver stations on TCP port 1750
+2021/06/07 20:51:00 Listening for driver stations on UDP port 1160
+2021/06/07 20:51:39 [field_monitor_display.go:69] Websocket read error: read tcp 10.0.100.5:8080->10.0.100.111:47416: wsarecv: An existing connection was forcibly closed by the remote host.
+2021/06/07 20:52:10 Serving HTTP requests on port 8080
+2021/06/07 20:52:10 Listening for driver stations on TCP port 1750
+2021/06/07 20:52:10 Listening for driver stations on UDP port 1160
+2021/06/07 20:52:26 Listening for driver stations on TCP port 1750
+2021/06/07 20:52:26 Serving HTTP requests on port 8080
+2021/06/07 20:52:26 Listening for driver stations on UDP port 1160
+2021/06/07 20:54:18 Failed to configure admin WiFi: dial tcp :22: i/o timeout
+2021/06/07 20:54:47 HTTP request error: Invalid match type ''.
+2021/06/07 20:54:47 http: superfluous response.WriteHeader call from github.com/Team254/cheesy-arena/web.handleWebErr (web.go:196)
+2021/06/07 20:58:02 HTTP request error: Invalid match type ''.
+2021/06/07 20:58:02 http: superfluous response.WriteHeader call from github.com/Team254/cheesy-arena/web.handleWebErr (web.go:196)
+2021/06/07 21:29:01 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 21:29:01 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 21:29:02 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 21:29:02 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 21:29:02 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 21:29:02 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 21:29:02 [field_monitor_display.go:69] Websocket read error: read tcp 10.0.100.5:8080->10.0.100.103:62426: wsarecv: A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+2021/06/07 21:29:02 [match_play.go:185] Websocket read error: read tcp 10.0.100.5:8080->10.0.100.103:60866: wsarecv: A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+2021/06/07 21:46:01 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 21:46:01 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 21:46:01 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 21:46:01 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 21:46:01 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 21:46:01 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 21:46:02 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 21:46:02 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 21:46:02 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 21:46:02 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 21:46:02 [match_play.go:185] Websocket read error: read tcp 10.0.100.5:8080->10.0.100.103:60649: wsarecv: A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+2021/06/07 21:46:02 [field_monitor_display.go:69] Websocket read error: read tcp 10.0.100.5:8080->10.0.100.103:60934: wsarecv: A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+2021/06/07 21:56:45 Failed to configure admin WiFi: dial tcp :22: i/o timeout
+2021/06/07 21:58:57 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 21:58:57 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 21:58:58 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 22:02:34 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 22:02:35 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 22:02:35 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 22:02:36 [scoring_panel.go:90] Websocket read error: read tcp 10.0.100.5:8080->10.0.100.201:43850: wsarecv: A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+2021/06/07 22:04:34 [scoring_panel.go:90] Websocket read error: read tcp 10.0.100.5:8080->10.0.100.115:49369: wsarecv: An existing connection was forcibly closed by the remote host.
+2021/06/07 22:05:04 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 22:05:04 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 22:05:05 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 22:05:07 [scoring_panel.go:90] Websocket read error: read tcp 10.0.100.5:8080->10.0.100.201:43898: wsarecv: A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+2021/06/07 22:17:43 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 22:17:43 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 22:17:43 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 22:17:43 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 22:17:44 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 22:17:44 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 22:17:44 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 22:17:45 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 22:17:45 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 22:17:45 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 22:17:45 Failed to send a 'arenaStatus' notification due to blocked listener.
+2021/06/07 22:17:46 Failed to send a 'arenaStatus' notification due to blocked listener.

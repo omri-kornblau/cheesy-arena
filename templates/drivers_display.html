@@ -7,73 +7,40 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Audience Display - {{.EventSettings.Name}} - Cheesy Arena </title>
+    <title>Drivers Display - {{.EventSettings.Name}} - Cheesy Arena </title>
     <link rel="shortcut icon" href="/static/img/favicon.ico">
     <link rel="stylesheet" href="/static/css/lib/bootstrap.min.css" />
     <link rel="stylesheet" href="/static/css/cheesy-arena.css" />
-    <link rel="stylesheet" href="/static/css/audience_display.css" />
+    <link rel="stylesheet" href="/static/css/drivers_display.css" />
   </head>
   <body>
     <div id="overlayCentering">
       <div id="matchOverlay">
         <div id="matchOverlayTop">
-          <div class="teams" id="leftTeams">
-            <div id="leftTeam1"></div>
-            <div id="leftTeam2"></div>
-            <div id="leftTeam3"></div>
-          </div>
-          <div class="score reversible-left">
-            <div class="avatars">
-              <img class="avatar" id="leftTeam1Avatar" src="" />
-              <img class="avatar" id="leftTeam2Avatar" src="" />
-              <img class="avatar" id="leftTeam3Avatar" src="" />
-            </div>
-            <div class="score-fields">
+            <div class="score-fields" id="leftScoreField">
               <div id="leftStage1"></div>
               <div id="leftStage2"></div>
               <div id="leftStage3"></div>
             </div>
+          <div class="score reversible-left">
             <div class="score-number" id="leftScoreNumber"></div>
           </div>
           <div class="score score-right reversible-right">
             <div class="score-number" id="rightScoreNumber"></div>
-            <div class="score-fields">
+            <div class="score-fields" id="rightScoreField">
               <div id="rightStage1"></div>
               <div id="rightStage2"></div>
               <div id="rightStage3"></div>
             </div>
-            <div class="avatars">
-              <img class="avatar" id="rightTeam1Avatar" src="" />
-              <img class="avatar" id="rightTeam2Avatar" src="" />
-              <img class="avatar" id="rightTeam3Avatar" src="" />
-            </div>
           </div>
-          <div class="teams" id="rightTeams">
-            <div id="rightTeam1"></div>
-            <div id="rightTeam2"></div>
-            <div id="rightTeam3"></div>
-          </div>
-        </div>
-        <div id="eventMatchInfo">
-          <span>{{.EventSettings.Name}}</span>
-          <span id="matchName"></span>
         </div>
       </div>
       <div class="text-center" id="matchCircle">
-        <img id="logo" src="/static/img/game-logo.png" alt="logo" />
+        <!-- <img id="logo" src="/static/img/game-logo.png" alt="logo" /> -->
         <div id="matchTime"></div>
       </div>
     </div>
     <div id="blindsContainer">
-      <div class="blinds right background">
-        <div class="blindsCenter blank"></div>
-      </div>
-      <div class="blinds left background">
-        <div class="blindsCenter blank"></div>
-      </div>
-      <div class="blindsCenter full">
-        <img id="blindsLogo" src="/static/img/game-logo.png" alt="logo" />
-      </div>
       <div id="finalScore">
         <div class="final-score reversible-left" id="leftFinalScore"></div>
         <div class="final-score reversible-right" id="rightFinalScore"></div>
@@ -87,42 +54,10 @@
           <img class="final-avatar" id="rightFinalTeam2Avatar" src="" /><span id="rightFinalTeam2"></span>
           <img class="final-avatar" id="rightFinalTeam3Avatar" src="" /><span id="rightFinalTeam3"></span>
         </div>
-        <div class="final-breakdown" id="leftFinalBreakdown">
-          <span class="valign-cell">
-            <span id="leftFinalInitiationLinePoints"></span><br />
-            <span id="leftFinalPowerCellPoints"></span><br />
-            <span id="leftFinalControlPanelPoints"></span><br />
-            <span id="leftFinalEndgamePoints"></span><br />
-            <span id="leftFinalFoulPoints"></span><br />
-            <span id="leftFinalControlPanelRankingPoint"></span><br />
-            <span id="leftFinalEndgameRankingPoint"></span><br />
-          </span>
-        </div>
-        <div class="final-breakdown" id="centerFinalBreakdown">
-          <span class="valign-cell">
-            Initiation Line<br />Power Cell<br />Control Panel<br />Endgame<br />Foul<br />
-            Shield Energized<br />Shield Operational
-          </span>
-        </div>
-        <div class="final-breakdown" id="rightFinalBreakdown">
-          <span class="valign-cell">
-            <span id="rightFinalInitiationLinePoints"></span><br />
-            <span id="rightFinalPowerCellPoints"></span><br />
-            <span id="rightFinalControlPanelPoints"></span><br />
-            <span id="rightFinalEndgamePoints"></span><br />
-            <span id="rightFinalFoulPoints"></span><br />
-            <span id="rightFinalControlPanelRankingPoint"></span><br />
-            <span id="rightFinalEndgameRankingPoint"></span><br />
-          </span>
-        </div>
         <div id="finalEventMatchInfo">
           <div class="final-footer">{{.EventSettings.Name}}</div>
           <div class="final-footer" id="finalSeriesStatus">&nbsp;</div>
           <div class="final-footer" id="finalMatchName">&nbsp;</div>
-        </div>
-      </div>
-      <div id="sponsor" class="carousel slide">
-        <div class="carousel-inner" id="sponsorContainer">
         </div>
       </div>
     </div>
@@ -166,10 +101,6 @@
         <h1>{{"{{Subtitle}}"}}</h1>
       </div>
     </script>
-    {{range $sound := .MatchSounds}}
-      <audio id="sound-{{$sound.Name}}" src="/static/audio/{{$sound.Name}}.{{$sound.FileExtension}}" preload="auto">
-      </audio>
-    {{end}}
     <script src="/static/js/lib/jquery.min.js"></script>
     <script src="/static/js/lib/jquery.json-2.4.min.js"></script>
     <script src="/static/js/lib/jquery.websocket-0.0.1.js"></script>
@@ -178,6 +109,6 @@
     <script src="/static/js/lib/bootstrap.min.js"></script>
     <script src="/static/js/cheesy-websocket.js"></script>
     <script src="/static/js/match_timing.js"></script>
-    <script src="/static/js/audience_display.js"></script>
+    <script src="/static/js/drivers_display.js"></script>
   </body>
 </html>

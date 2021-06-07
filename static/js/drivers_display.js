@@ -16,19 +16,19 @@ var sponsorImageTemplate = Handlebars.compile($("#sponsorImageTemplate").html())
 var sponsorTextTemplate = Handlebars.compile($("#sponsorTextTemplate").html());
 
 // Constants for overlay positioning. The CSS is the source of truth for the values that represent initial state.
-var overlayCenteringTopUp = "-130px";
+var overlayCenteringTopUp = "0px";
 var overlayCenteringBottomHideParams = {queue: false, bottom: $("#overlayCentering").css("bottom")};
-var overlayCenteringBottomShowParams = {queue: false, bottom: "0px"};
+var overlayCenteringBottomShowParams = {queue: false, bottom: "250px"};
 var overlayCenteringTopHideParams = {queue: false, top: overlayCenteringTopUp};
-var overlayCenteringTopShowParams = {queue: false, top: "50px"};
-var eventMatchInfoDown = "30px";
+var overlayCenteringTopShowParams = {queue: false, top: "40px"};
+var eventMatchInfoDown = "50px";
 var eventMatchInfoUp = $("#eventMatchInfo").css("height");
-var logoUp = "10px";
+var logoUp = "80px";
 var logoDown = $("#logo").css("top");
 var scoreIn = $(".score").css("width");
-var scoreMid = "135px";
-var scoreOut = "255px";
-var scoreFieldsOut = "40px";
+var scoreMid = "200px";
+var scoreOut = "800px";
+var scoreFieldsOut = "100px";
 
 // Handles a websocket message to change which screen is displayed.
 var handleAudienceDisplayMode = function(targetScreen) {
@@ -109,8 +109,6 @@ var handleScorePosted = function(data) {
   $("#" + redSide + "FinalFoulPoints").text(data.RedScoreSummary.FoulPoints);
   $("#" + redSide + "FinalControlPanelRankingPoint").html(data.RedScoreSummary.ControlPanelRankingPoint ? "&#x2714;" : "&#x2718;");
   $("#" + redSide + "FinalControlPanelRankingPoint").attr("data-checked", data.RedScoreSummary.ControlPanelRankingPoint);
-  $("#" + redSide + "FinalEndgameRankingPoint").html(data.RedScoreSummary.EndgameRankingPoint ? "&#x2714;" : "&#x2718;");
-  $("#" + redSide + "FinalEndgameRankingPoint").attr("data-checked", data.RedScoreSummary.EndgameRankingPoint);
   $("#" + blueSide + "FinalScore").text(data.BlueScoreSummary.Score);
   $("#" + blueSide + "FinalTeam1").html(data.Match.Blue1 + "" + getRankingText(data.Match.Blue1, data.Rankings));
   $("#" + blueSide + "FinalTeam2").html(data.Match.Blue2 + "" + getRankingText(data.Match.Blue2, data.Rankings));
@@ -125,21 +123,9 @@ var handleScorePosted = function(data) {
   $("#" + blueSide + "FinalFoulPoints").text(data.BlueScoreSummary.FoulPoints);
   $("#" + blueSide + "FinalControlPanelRankingPoint").html(data.BlueScoreSummary.ControlPanelRankingPoint ? "&#x2714;" : "&#x2718;");
   $("#" + blueSide + "FinalControlPanelRankingPoint").attr("data-checked", data.BlueScoreSummary.ControlPanelRankingPoint);
-  $("#" + blueSide + "FinalEndgameRankingPoint").html(data.BlueScoreSummary.EndgameRankingPoint ? "&#x2714;" : "&#x2718;");
-  $("#" + blueSide + "FinalEndgameRankingPoint").attr("data-checked", data.BlueScoreSummary.EndgameRankingPoint);
   $("#finalSeriesStatus").text(data.SeriesStatus);
   $("#finalSeriesStatus").attr("data-leader", data.SeriesLeader);
   $("#finalMatchName").text(data.MatchType + " " + data.Match.DisplayName);
-};
-
-// Handles a websocket message to play a sound to signal match start/stop/etc.
-var handlePlaySound = function(sound) {
-  $("audio").each(function(k, v) {
-    // Stop and reset any sounds that are still playing.
-    v.pause();
-    v.currentTime = 0;
-  });
-  $("#sound-" + sound)[0].play();
 };
 
 // Handles a websocket message to update the alliance selection screen.
@@ -266,57 +252,35 @@ var transitionInMatchToBlank = function(callback) {
 };
 
 var transitionBlankToLogo = function(callback) {
-  $(".blindsCenter.blank").css({rotateY: "0deg"});
-  $(".blindsCenter.full").css({rotateY: "-180deg"});
-  $(".blinds.right").transition({queue: false, right: 0}, 1000, "ease");
-  $(".blinds.left").transition({queue: false, left: 0}, 1000, "ease", function() {
-    $(".blinds.left").addClass("full");
-    $(".blinds.right").hide();
-    setTimeout(function() {
-      $(".blindsCenter.blank").transition({queue: false, rotateY: "180deg"}, 500, "ease");
-      $(".blindsCenter.full").transition({queue: false, rotateY: "0deg"}, 500, "ease", callback);
-    }, 200);
-  });
+  callback();
 };
 
 var transitionLogoToBlank = function(callback) {
-  $(".blindsCenter.blank").transition({queue: false, rotateY: "360deg"}, 500, "ease");
-  $(".blindsCenter.full").transition({queue: false, rotateY: "180deg"}, 500, "ease", function() {
-    setTimeout(function() {
-      $(".blinds.left").removeClass("full");
-      $(".blinds.right").show();
-      $(".blinds.right").transition({queue: false, right: "-50%"}, 700, "ease");
-      $(".blinds.left").transition({queue: false, left: "-50%"}, 700, "ease", callback);
-    }, 200);
-  });
+  callback();
 };
 
 var transitionLogoToScore = function(callback) {
-  $(".blindsCenter.full").transition({queue: false, top: "-350px"}, 625, "ease");
   $("#finalScore").show();
   $("#finalScore").transition({queue: false, opacity: 1}, 1000, "ease", callback);
 };
 
 var transitionBlankToScore = function(callback) {
-  setTimeout(function() { 
-    transitionBlankToLogo(function() {
-      setTimeout(function() { transitionLogoToScore(callback); }, 50);
-    });
-  }, 500);
+  transitionBlankToLogo(function() {
+    setTimeout(function() { transitionLogoToScore(callback); }, 2000);
+  });
 };
 
 var transitionScoreToLogo = function(callback) {
   $("#finalScore").transition({queue: false, opacity: 0}, 300, "ease", function(){
     $("#finalScore").hide();
+    callback();
   });
-  $(".blindsCenter.full").transition({queue: false, top: 0}, 425, "ease", callback);
 };
 
 var transitionScoreToBlank = function(callback) {
-  setTimeout(function() { 
-    transitionScoreToLogo();
+  transitionScoreToLogo(function() {
     transitionLogoToBlank(callback);
-  }, 800);
+  });
 };
 
 var transitionBlankToAllianceSelection = function(callback) {
@@ -329,16 +293,6 @@ var transitionAllianceSelectionToBlank = function(callback) {
 };
 
 var transitionBlankToSponsor = function(callback) {
-  $(".blindsCenter.blank").css({rotateY: "90deg"});
-  $(".blinds.right").transition({queue: false, right: 0}, 1000, "ease");
-  $(".blinds.left").transition({queue: false, left: 0}, 1000, "ease", function() {
-    $(".blinds.left").addClass("full");
-    $(".blinds.right").hide();
-    setTimeout(function() {
-      $("#sponsor").show();
-      $("#sponsor").transition({queue: false, opacity: 1}, 1000, "ease", callback);
-    }, 200);
-  });
 };
 
 var transitionSponsorToBlank = function(callback) {
@@ -474,14 +428,16 @@ var getAvatarUrl = function(teamId) {
 var setPowerCellText = function(element, scoreSummary, stage) {
   var text = "&nbsp;";
   var opacity = 1;
+  var color = "white"
   if (scoreSummary.StagesActivated[stage]) {
     text = "I".repeat(stage + 1);
-    opacity = 0.4;
+    color = "black"
   } else if (stage === 0 || scoreSummary.StagesActivated[stage - 1]) {
     text = scoreSummary.StagePowerCellsRemaining[stage];
   }
   element.html(text);
   element.css("opacity", opacity);
+  element.css("color", color);
 };
 
 // Returns the string to be displayed next to the team number on the final score screen, to indicate change in rank.
@@ -502,7 +458,7 @@ var getRankingText = function(teamId, rankings) {
 $(function() {
   // Read the configuration for this display from the URL query string.
   var urlParams = new URLSearchParams(window.location.search);
-  document.body.style.backgroundColor = urlParams.get("background");
+  document.body.style.backgroundColor = "black";
   var reversed = urlParams.get("reversed");
   if (reversed === "true") {
     redSide = "right";
@@ -523,14 +479,13 @@ $(function() {
   }
 
   // Set up the websocket back to the server.
-  websocket = new CheesyWebsocket("/displays/audience/websocket", {
+  websocket = new CheesyWebsocket("/displays/drivers/websocket", {
     allianceSelection: function(event) { handleAllianceSelection(event.data); },
     audienceDisplayMode: function(event) { handleAudienceDisplayMode(event.data); },
     lowerThird: function(event) { handleLowerThird(event.data); },
     matchLoad: function(event) { handleMatchLoad(event.data); },
     matchTime: function(event) { handleMatchTime(event.data); },
     matchTiming: function(event) { handleMatchTiming(event.data); },
-    playSound: function(event) { handlePlaySound(event.data); },
     realtimeScore: function(event) { handleRealtimeScore(event.data); },
     scorePosted: function(event) { handleScorePosted(event.data); }
   });
@@ -542,9 +497,6 @@ $(function() {
       intro: transitionBlankToIntro,
       match: transitionBlankToInMatch,
       score: transitionBlankToScore,
-      logo: transitionBlankToLogo,
-      sponsor: transitionBlankToSponsor,
-      allianceSelection: transitionBlankToAllianceSelection,
       timeout: transitionBlankToTimeout
     },
     intro: {
@@ -557,19 +509,14 @@ $(function() {
       intro: transitionInMatchToIntro
     },
     score: {
-      blank: transitionScoreToBlank,
       logo: transitionScoreToLogo,
-      sponsor: transitionScoreToSponsor
+      blank: transitionScoreToBlank,
     },
     logo: {
       blank: transitionLogoToBlank,
-      score: transitionLogoToScore,
-      sponsor: transitionLogoToSponsor
     },
     sponsor: {
       blank: transitionSponsorToBlank,
-      logo: transitionSponsorToLogo,
-      score: transitionSponsorToScore
     },
     allianceSelection: {
       blank: transitionAllianceSelectionToBlank
