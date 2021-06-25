@@ -61,7 +61,6 @@ func (sw *Switch) ConfigureTeamEthernet(teams [6]*model.Team) error {
 		} else {
 			addTeamVlansCommand += fmt.Sprintf(
 				"ip dhcp excluded-address 10.%d.%d.1 10.%d.%d.100\n"+
-					"no ip dhcp pool dhcp%d\n"+
 					"ip dhcp pool dhcp%d\n"+
 					"network 10.%d.%d.0 255.255.255.0\n"+
 					"default-router 10.%d.%d.61\n"+
@@ -70,7 +69,7 @@ func (sw *Switch) ConfigureTeamEthernet(teams [6]*model.Team) error {
 					"access-list 1%d permit ip 10.%d.%d.0 0.0.0.255 host %s\n"+
 					"access-list 1%d permit udp any eq bootpc any eq bootps\n"+
 					"interface Vlan%d\nip address 10.%d.%d.61 255.255.255.0\n",
-				team.Id/100, team.Id%100, team.Id/100, team.Id%100, vlan, vlan, team.Id/100, team.Id%100, team.Id/100,
+				team.Id/100, team.Id%100, team.Id/100, team.Id%100, vlan, team.Id/100, team.Id%100, team.Id/100,
 				team.Id%100, vlan, vlan, team.Id/100, team.Id%100, ServerIpAddress, vlan, vlan, team.Id/100,
 				team.Id%100)
 		}
@@ -88,10 +87,14 @@ func (sw *Switch) ConfigureTeamEthernet(teams [6]*model.Team) error {
 		removeTeamVlansCommand += fmt.Sprintf("interface Vlan%d\nno ip address\nno access-list 1%d\n", vlan, vlan)
 	}
 
+	for index, _ := range teams {
+		removeTeamVlansCommand += fmt.Sprintf("no ip dhcp pool dhcp%d\n", (index + 1) * 10)
+	}
+
 	// Build and run the overall command to do everything in a single telnet session.
 	command := removeTeamVlansCommand + addTeamVlansCommand
 	if len(command) > 0 {
-		_, err = sw.runConfigCommand(removeTeamVlansCommand + addTeamVlansCommand)
+		_, err := sw.runConfigCommand(removeTeamVlansCommand + addTeamVlansCommand)
 		if err != nil {
 			return err
 		}
