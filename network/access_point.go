@@ -209,12 +209,13 @@ func (ap *AccessPoint) runCommand(command string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	defer conn.Close()
+
 	session, err := conn.NewSession()
 	if err != nil {
 		return "", err
 	}
 	defer session.Close()
-	defer conn.Close()
 
 	// Run the command with a timeout.
 	commandChan := make(chan sshOutput, 1)
