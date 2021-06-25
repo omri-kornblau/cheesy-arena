@@ -460,7 +460,9 @@ func (arena *Arena) Update() {
 			go func() {
 				// Configure the network in advance for the next match after a delay.
 				time.Sleep(time.Second * preLoadNextMatchDelaySec)
-				arena.preLoadNextMatch()
+
+				// Disable pre-loading of next matches to allow more predictable behaviour 
+				// arena.preLoadNextMatch()
 			}()
 		}
 	case TimeoutActive:
