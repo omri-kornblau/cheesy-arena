@@ -127,7 +127,7 @@ func (web *Web) scoringPanelWebsocketHandler(w http.ResponseWriter, r *http.Requ
 			case "CI":
 				// Don't read score from counter if not in match
 				if web.arena.MatchState != field.PostMatch && web.arena.MatchState != field.PreMatch {
-					if web.arena.MatchState == field.AutoPeriod {
+					if web.arena.MatchState == field.AutoPeriod || web.arena.MatchState == field.PausePeriod {
 						if incrementGoal(score.AutoCellsInner[:],
 							score.CellCountingStage(web.arena.MatchState >= field.TeleopPeriod)) {
 							scoreChanged = true
@@ -144,7 +144,7 @@ func (web *Web) scoringPanelWebsocketHandler(w http.ResponseWriter, r *http.Requ
 			case "CO":
 				// Don't read score from counter if not in match
 				if web.arena.MatchState != field.PostMatch && web.arena.MatchState != field.PreMatch {
-					if web.arena.MatchState == field.AutoPeriod {
+					if web.arena.MatchState == field.AutoPeriod || web.arena.MatchState == field.PausePeriod {
 						if incrementGoal(score.AutoCellsOuter[:],
 							score.CellCountingStage(web.arena.MatchState >= field.TeleopPeriod)) {
 							scoreChanged = true
