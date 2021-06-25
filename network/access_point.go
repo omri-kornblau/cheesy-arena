@@ -23,6 +23,8 @@ const (
 	accessPointPollPeriodSec          = 3
 	accessPointRequestBufferSize      = 10
 	accessPointConfigRetryIntervalSec = 5
+	sshCommandTimeoutError            = "WiFi SSH command timed out after %d seconds"
+	gettingWifiInfoTimeout            = "Error getting wifi info from AP: %v"
 )
 
 type AccessPoint struct {
@@ -133,6 +135,7 @@ func (ap *AccessPoint) handleTeamWifiConfiguration(teams [6]*model.Team) {
 
 	// Loop indefinitely at writing the configuration and reading it back until it is successfully applied.
 	attemptCount := 1
+	timeoutCount := 1
 	for {
 		_, err := ap.runCommand(command)
 
@@ -150,6 +153,16 @@ func (ap *AccessPoint) handleTeamWifiConfiguration(teams [6]*model.Team) {
 
 		if err != nil {
 			log.Printf("Error configuring WiFi: %v", err)
+			if err.Error() == fmt.Sprintf(gettingWifiInfoTimeout, fmt.Sprintf(sshCommandTimeoutError, accessPointCommandTimeoutSec)) {
+				if timeoutCount >= 3 {
+					log.Println("Rebooting AP due to max ssh retries")
+					ap.runCommand("reboot")
+					timeoutCount = 0
+					continue
+				}
+
+				timeoutCount++
+			}
 		}
 
 		log.Printf("WiFi configuration still incorrect after %d attempts; trying again.", attemptCount)
@@ -188,7 +201,7 @@ func (ap *AccessPoint) updateTeamWifiStatuses() error {
 	}
 
 	if err != nil {
-		return fmt.Errorf("Error getting wifi info from AP: %v", err)
+		return fmt.Errorf(gettingWifiInfoTimeout, err)
 	} else {
 		if !ap.initialStatusesFetched {
 			ap.initialStatusesFetched = true
@@ -227,7 +240,7 @@ func (ap *AccessPoint) runCommand(command string) (string, error) {
 	case output := <-commandChan:
 		return output.output, output.err
 	case <-time.After(accessPointCommandTimeoutSec * time.Second):
-		return "", fmt.Errorf("WiFi SSH command timed out after %d seconds", accessPointCommandTimeoutSec)
+		return "", fmt.Errorf(sshCommandTimeoutError, accessPointCommandTimeoutSec)
 	}
 }
 
