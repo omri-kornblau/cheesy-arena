@@ -9,11 +9,12 @@ var foulRuleButton;
 var firstMatchLoad = true;
 var rules = [];
 
-// Glide setup try 
+// Glide setup try
 var teamsSwiper = new Swiper(".teams-swiper", {
-  slidesPerView: 4,
+  slidesPerView: 7,
+  initialSlide: 3,
   centeredSlides: true,
-  spaceBetween: 30,
+  spaceBetween: 15,
   pagination: {
     el: ".swiper-pagination",
     clickable: true
@@ -25,29 +26,37 @@ var teamsSwiper = new Swiper(".teams-swiper", {
 });
 
 var handleTeamsSwiperChange = function(swiper) {
-  setFoulTeam(swiper.slides[swiper.activeIndex]) 
+  setFoulTeam(swiper.slides[swiper.activeIndex])
 }
 
 teamsSwiper
   .on("click", handleTeamsSwiperChange)
   .on("activeIndexChange", handleTeamsSwiperChange)
 
-var rulesSwiper = new Swiper(".rules-swiper", {
+var rulesSwiperOptions = {
   slidesPerView: 'auto',
   centeredSlides: true,
+  initialSlide: 5,
   spaceBetween: 15,
   freeMode: true,
   slideToClickedSlide: true,
   freeModeSticky: true,
   freeModeMomentum: false
-});
+}
+
+var commonRulesSwiper = new Swiper(".common-rules-swiper", rulesSwiperOptions);
+var rareRulesSwiper = new Swiper(".rare-rules-swiper", rulesSwiperOptions);
 
 var handleRulesSwiperChange = function(swiper) {
   var ruleIndex = swiper.activeIndex
-  setFoulRule(swiper.slides[ruleIndex]) 
+  setFoulRule(swiper.slides[ruleIndex])
 }
 
-rulesSwiper
+commonRulesSwiper
+  .on("click", handleRulesSwiperChange)
+  .on("activeIndexChange", handleRulesSwiperChange)
+
+rareRulesSwiper
   .on("click", handleRulesSwiperChange)
   .on("activeIndexChange", handleRulesSwiperChange)
 
