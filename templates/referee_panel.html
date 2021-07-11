@@ -57,19 +57,39 @@
           <br/>
           <h4 style="text-align: center;">Foul:</h4>
           <div class="row">
-            <div class="swiper-container rules-swiper">
+            <div class="swiper-container rules-swiper common-rules-swiper">
               <div class="swiper-wrapper">
                 {{range $rule := .Rules}}
-                  <div data-rule-id="{{$rule.Id}}" 
-                    class="swiper-slide">
-                    <div class="btn btn-sm {{if $rule.IsTechnical}}btn-danger{{else if $rule.IsRankingPoint}}btn-primary
-                                      {{else}}btn-warning{{end}} btn-referee">
-                      {{$rule.RuleNumber}}{{if $rule.IsTechnical}}<sup>T</sup>{{else if $rule.IsRankingPoint}}<sup>RP</sup>{{end}}
+                  {{if lt $rule.Id 30}}
+                    <div data-rule-id="{{$rule.Id}}"
+                      class="swiper-slide">
+                      <div class="btn btn-sm {{if $rule.IsTechnical}}btn-danger{{else if $rule.IsRankingPoint}}btn-primary
+                                        {{else}}btn-warning{{end}} btn-referee">
+                        {{$rule.RuleNumber}}{{if $rule.IsTechnical}}<sup>T</sup>{{else if $rule.IsRankingPoint}}<sup>RP</sup>{{end}}
+                      </div>
+                      <div class="rule-description">
+                        {{$rule.Description}}
+                      </div>
                     </div>
-                    <div class="rule-description">
-                      {{$rule.Description}}
+                  {{end}}
+                {{end}}
+              </div>
+            </div>
+            <div class="swiper-container rules-swiper rare-rules-swiper">
+              <div class="swiper-wrapper">
+                {{range $rule := .Rules}}
+                  {{if gt $rule.Id 30}}
+                    <div data-rule-id="{{$rule.Id}}"
+                      class="swiper-slide">
+                      <div class="btn btn-sm {{if $rule.IsTechnical}}btn-danger{{else if $rule.IsRankingPoint}}btn-primary
+                                        {{else}}btn-warning{{end}} btn-referee">
+                        {{$rule.RuleNumber}}{{if $rule.IsTechnical}}<sup>T</sup>{{else if $rule.IsRankingPoint}}<sup>RP</sup>{{end}}
+                      </div>
+                      <div class="rule-description">
+                        {{$rule.Description}}
+                      </div>
                     </div>
-                  </div>
+                  {{end}}
                 {{end}}
               </div>
             </div>
