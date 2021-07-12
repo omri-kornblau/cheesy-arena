@@ -15,7 +15,7 @@ type Score struct {
 	TeleopCellsBottom    [4]int
 	TeleopCellsOuter     [4]int
 	TeleopCellsInner     [4]int
-	ControlPanelStatus
+	ControlPanelStatus   ControlPanelStatus
 	EndgameStatuses            [3]EndgameStatus
 	RungIsLevel                bool
 	Fouls                      []Foul

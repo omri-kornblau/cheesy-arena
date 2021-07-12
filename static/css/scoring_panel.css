@@ -96,10 +96,10 @@ body {
   background-color: #633;
 }
 .control-panel-color[data-value="2"] {
-  background-color: #263;
+  background-color: #236;
 }
 .control-panel-color[data-value="3"] {
-  background-color: #236;
+  background-color: #263;
 }
 .control-panel-color[data-value="4"] {
   background-color: #882;

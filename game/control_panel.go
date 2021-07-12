@@ -9,17 +9,20 @@ import (
 	"math"
 	"math/rand"
 	"time"
+	"fmt"
 )
 
 type ControlPanel struct {
 	CurrentColor ControlPanelColor
 	ControlPanelStatus
 	ControlPanelLightState
+	positionTargetColor       ControlPanelColor
+	OrbitRotation             int
+	MaxOrbitRotation          int
 	rotationStarted           bool
 	rotationStartSegmentCount int
 	lastSegmentCountDiff      int
 	rotationStopTime          time.Time
-	positionTargetColor       ControlPanelColor
 	lastPositionCorrect       bool
 	positionStopTime          time.Time
 }
@@ -77,6 +80,7 @@ func (controlPanel *ControlPanel) UpdateState(segmentCount int, stage2AtCapacity
 
 // Returns the target color for position control, assigning it randomly if it is not yet designated.
 func (controlPanel *ControlPanel) GetPositionControlTargetColor() ControlPanelColor {
+	// fmt.Printf("Choosing color based on: %v\n", controlPanel.CurrentColor)
 	if controlPanel.positionTargetColor == ColorUnknown {
 		if controlPanel.CurrentColor == ColorUnknown {
 			// If the sensor or manual scorekeeping did not detect/set the current color, pick one of the four at
@@ -89,6 +93,7 @@ func (controlPanel *ControlPanel) GetPositionControlTargetColor() ControlPanelCo
 				newColor -= 4
 			}
 			controlPanel.positionTargetColor = ControlPanelColor(newColor)
+			fmt.Println(newColor, controlPanel.CurrentColor)
 		}
 	}
 	return controlPanel.positionTargetColor

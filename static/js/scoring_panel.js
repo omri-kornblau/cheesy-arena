@@ -125,9 +125,9 @@ var getControlPanelColorText = function(level) {
     case 1:
       return "Red";
     case 2:
-      return "Green";
-    case 3:
       return "Blue";
+    case 3:
+      return "Green";
     case 4:
       return "Yellow";
     default:

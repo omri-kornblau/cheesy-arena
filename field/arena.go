@@ -812,15 +812,19 @@ func (arena *Arena) handlePlcInput() {
 		}
 	}
 
-	// Check if either alliance has reached Stage 3 capacity.
+	// Check if red alliance has reached Stage 3 capacity.
 	if redScore.StageAtCapacity(game.Stage3, arena.MatchState >= TeleopPeriod) &&
-		redScore.PositionControlTargetColor == game.ColorUnknown ||
-		blueScore.StageAtCapacity(game.Stage3, arena.MatchState >= TeleopPeriod) &&
-			blueScore.PositionControlTargetColor == game.ColorUnknown {
+		redScore.PositionControlTargetColor == game.ColorUnknown {
 		// Determine the position control target colors and send packets to inform the driver stations.
 		redScore.PositionControlTargetColor = arena.RedRealtimeScore.ControlPanel.GetPositionControlTargetColor()
-		blueScore.PositionControlTargetColor = arena.BlueRealtimeScore.ControlPanel.GetPositionControlTargetColor()
 		arena.sendGameDataPacket(redScore.PositionControlTargetColor, "R1", "R2", "R3")
+	}
+
+	// Check if blue alliance has reached Stage 3 capacity.
+	if blueScore.StageAtCapacity(game.Stage3, arena.MatchState >= TeleopPeriod) &&
+		blueScore.PositionControlTargetColor == game.ColorUnknown {
+		// Determine the position control target colors and send packets to inform the driver stations.
+		blueScore.PositionControlTargetColor = arena.BlueRealtimeScore.ControlPanel.GetPositionControlTargetColor()
 		arena.sendGameDataPacket(blueScore.PositionControlTargetColor, "B1", "B2", "B3")
 	}
 

@@ -88,8 +88,8 @@ var handleRealtimeScore = function(data) {
 
   for (var i = 0; i < 3; i++) {
     var i1 = i + 1;
-    setPowerCellText($("#" + redSide + "Stage" + i1), data.Red.ScoreSummary, i);
-    setPowerCellText($("#" + blueSide + "Stage" + i1), data.Blue.ScoreSummary, i);
+    setPowerCellText($("#" + redSide + "Stage" + i1), data.Red, i);
+    setPowerCellText($("#" + blueSide + "Stage" + i1), data.Blue, i);
   }
 };
 
@@ -425,17 +425,40 @@ var getAvatarUrl = function(teamId) {
 };
 
 // Populates the given element on the overlay to represent the given power cell stage.
-var setPowerCellText = function(element, scoreSummary, stage) {
+var setPowerCellText = function(element, score, stage) {
   var text = "&nbsp;";
   var opacity = 1;
   var color = "white"
-  if (scoreSummary.StagesActivated[stage]) {
+
+  if (score.ScoreSummary.StagesActivated[stage]) {
     text = "I".repeat(stage + 1);
     color = "black"
-  } else if (stage === 0 || scoreSummary.StagesActivated[stage - 1]) {
-    text = scoreSummary.StagePowerCellsRemaining[stage];
+  } else if (stage === 0 || score.ScoreSummary.StagesActivated[stage - 1]) {
+    text = score.ScoreSummary.StagePowerCellsRemaining[stage];
+    if (stage === 2 && score.ScoreSummary.StagePowerCellsRemaining[stage] === 0) {
+      switch (score.Score.PositionControlTargetColor) {
+        case 1:
+          color = "red"
+          break;
+        case 2:
+          color = "blue"
+          break;
+        case 3:
+          color = "green"
+          break;
+        case 4:
+          color = "yellow"
+          break;
+      }
+      text = `
+        <svg height="180" width="180">
+          <circle cx="80" cy="80" r="70" stroke="black" stroke-width="6" fill=${color} />
+        </svg>`
+    }
   }
+  
   element.html(text);
+
   element.css("opacity", opacity);
   element.css("color", color);
 };

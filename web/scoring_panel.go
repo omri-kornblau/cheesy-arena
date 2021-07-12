@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"encoding/json"
 
 	"github.com/Team254/cheesy-arena/field"
 	"github.com/Team254/cheesy-arena/game"
@@ -20,6 +21,20 @@ import (
 	"github.com/gorilla/mux"
 )
 
+func Abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+
+	return x
+}
+
+type WheelSensorMessage struct {
+	Color string `json:"color"`
+	Rotation int `json:"rotation"`
+	WaitedTowSeconds bool `json:"waited2"`
+	WaitedFiveSeconds bool `json:"waited5"`
+  }
 // Renders the scoring interface which enables input of scores in real-time.
 func (web *Web) scoringPanelHandler(w http.ResponseWriter, r *http.Request) {
 	if !web.userIsAdmin(w, r) {
@@ -64,10 +79,13 @@ func (web *Web) scoringPanelWebsocketHandler(w http.ResponseWriter, r *http.Requ
 	}
 
 	var realtimeScore **field.RealtimeScore
+	var controlPanel *game.ControlPanel
 	if alliance == "red" {
 		realtimeScore = &web.arena.RedRealtimeScore
+		controlPanel = &web.arena.RedRealtimeScore.ControlPanel
 	} else {
 		realtimeScore = &web.arena.BlueRealtimeScore
+		controlPanel = &web.arena.BlueRealtimeScore.ControlPanel
 	}
 
 	ws, err := websocket.NewWebsocket(w, r)
@@ -87,7 +105,7 @@ func (web *Web) scoringPanelWebsocketHandler(w http.ResponseWriter, r *http.Requ
 
 	// Loop, waiting for commands and responding to them, until the client closes the connection.
 	for {
-		command, _, err := ws.Read()
+		command, commandData, err := ws.Read()
 		if err != nil {
 			if err == io.EOF {
 				// Client has closed the connection; nothing to do here.
@@ -99,6 +117,7 @@ func (web *Web) scoringPanelWebsocketHandler(w http.ResponseWriter, r *http.Requ
 
 		score := &(*realtimeScore).CurrentScore
 		scoreChanged := false
+		scoreChanged = true
 
 		if command == "commitMatch" {
 			if web.arena.MatchState != field.PostMatch {
@@ -155,6 +174,74 @@ func (web *Web) scoringPanelWebsocketHandler(w http.ResponseWriter, r *http.Requ
 							score.CellCountingStage(web.arena.MatchState >= field.TeleopPeriod)) {
 							scoreChanged = true
 						}
+					}
+				}
+
+			case "CL":
+				// Don't read score from counter if not in match
+				if web.arena.MatchState != field.PostMatch && web.arena.MatchState != field.PreMatch {
+					if web.arena.MatchState == field.AutoPeriod || web.arena.MatchState == field.PausePeriod {
+						if incrementGoal(score.AutoCellsBottom[:],
+							score.CellCountingStage(web.arena.MatchState >= field.TeleopPeriod)) {
+							scoreChanged = true
+						}
+					}
+					if web.arena.MatchState == field.TeleopPeriod {
+						if incrementGoal(score.TeleopCellsBottom[:],
+							score.CellCountingStage(web.arena.MatchState >= field.TeleopPeriod)) {
+							scoreChanged = true
+						}
+					}
+				}
+			case "WL":
+				if web.arena.MatchState == field.TeleopPeriod {
+					var wheelSensorMessage WheelSensorMessage
+					json.Unmarshal([]byte(commandData.(string)), &wheelSensorMessage)
+
+					if wheelSensorMessage.Color == "red" {
+						controlPanel.CurrentColor = game.ColorRed
+					} else if wheelSensorMessage.Color == "green" {
+						controlPanel.CurrentColor = game.ColorGreen
+					} else if wheelSensorMessage.Color == "yellow" {
+						controlPanel.CurrentColor = game.ColorYellow
+					} else if wheelSensorMessage.Color == "blue" {
+						controlPanel.CurrentColor = game.ColorBlue
+					}
+
+					if score.StageAtCapacity(game.Stage3, true) {
+						fmt.Println(controlPanel.CurrentColor, controlPanel.GetPositionControlTargetColor())
+						if controlPanel.CurrentColor == controlPanel.GetPositionControlTargetColor() && wheelSensorMessage.WaitedFiveSeconds {
+							score.ControlPanelStatus = game.ControlPanelPosition
+							scoreChanged = true
+						}
+					} else if score.StageAtCapacity(game.Stage2, true) {
+						controlPanel.OrbitRotation += wheelSensorMessage.Rotation
+						amountOfRotations := Abs(controlPanel.OrbitRotation)
+						if amountOfRotations >= controlPanel.MaxOrbitRotation {
+							controlPanel.MaxOrbitRotation = amountOfRotations
+						} else if amountOfRotations + 4 <= controlPanel.MaxOrbitRotation {
+							rotationsDiff := controlPanel.MaxOrbitRotation - amountOfRotations
+							if controlPanel.OrbitRotation > 0 {
+								controlPanel.OrbitRotation = 0 - rotationsDiff
+							} else if controlPanel.OrbitRotation < 0 {
+								controlPanel.OrbitRotation = rotationsDiff
+							} else {
+								controlPanel.OrbitRotation = 0
+							}
+
+							amountOfRotations = Abs(controlPanel.OrbitRotation)
+							controlPanel.MaxOrbitRotation = amountOfRotations
+						}
+
+						if amountOfRotations >= 3 * 8 && amountOfRotations <= 5 * 8 && wheelSensorMessage.WaitedTowSeconds {
+							score.ControlPanelStatus = game.ControlPanelRotation
+							controlPanel.OrbitRotation = 0
+							scoreChanged = true
+						} else if amountOfRotations >= 5 * 8 {
+							controlPanel.OrbitRotation = 0
+						}
+
+						fmt.Println(controlPanel.OrbitRotation, controlPanel.MaxOrbitRotation)
 					}
 				}
 
