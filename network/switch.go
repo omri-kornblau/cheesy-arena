@@ -52,13 +52,16 @@ func (sw *Switch) ConfigureTeamEthernet(teams [6]*model.Team) error {
 		return err
 	}
 	addTeamVlansCommand := ""
+	removeTeamVlansCommand := ""
 	replaceTeamVlan := func(team *model.Team, vlan int) {
 		if team == nil {
 			return
 		}
 		if oldTeamVlans[team.Id] == vlan {
+			removeTeamVlansCommand += fmt.Sprintf("interface Vlan%d\nno ip address\nno access-list 1%d\n", vlan, vlan)
 			delete(oldTeamVlans, team.Id)
 		} else {
+			removeTeamVlansCommand += fmt.Sprintf("no ip dhcp pool dhcp%d\n", vlan)
 			addTeamVlansCommand += fmt.Sprintf(
 				"ip dhcp excluded-address 10.%d.%d.1 10.%d.%d.100\n"+
 					"ip dhcp pool dhcp%d\n"+
@@ -81,20 +84,10 @@ func (sw *Switch) ConfigureTeamEthernet(teams [6]*model.Team) error {
 	replaceTeamVlan(teams[4], blue2Vlan)
 	replaceTeamVlan(teams[5], blue3Vlan)
 
-	// Build the command to remove the team VLANs that are no longer needed.
-	removeTeamVlansCommand := ""
-	for _, vlan := range oldTeamVlans {
-		removeTeamVlansCommand += fmt.Sprintf("interface Vlan%d\nno ip address\nno access-list 1%d\n", vlan, vlan)
-	}
-
-	for index, _ := range teams {
-		removeTeamVlansCommand += fmt.Sprintf("no ip dhcp pool dhcp%d\n", (index + 1) * 10)
-	}
-
 	// Build and run the overall command to do everything in a single telnet session.
 	command := removeTeamVlansCommand + addTeamVlansCommand
 	if len(command) > 0 {
-		_, err := sw.runConfigCommand(removeTeamVlansCommand + addTeamVlansCommand)
+		_, err := sw.runConfigCommand(command)
 		if err != nil {
 			return err
 		}
