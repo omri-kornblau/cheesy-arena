@@ -17,20 +17,21 @@ type Score struct {
 }
 
 type ScoreSummary struct {
-	ExitedTarmacPoints            int
-	AutoCargoPoints               int
-	TeleopCargoPoints             int
-	CargoPoints                   int
-	CargoLeftForCargoRankingPoint int
-	LowerCargo                    int
-	UpperCargo                    int
-	AutoPoints                    int
-	TeleopPoints                  int
-	EndgamePoints                 int
-	FoulPoints                    int
-	Score                         int
-	CargoRankingPoint             bool
-	EndgameRankingPoint           bool
+	ExitedTarmacPoints         int
+	AutoCargoPoints            int
+	TeleopCargoPoints          int
+	CargoPoints                int
+	CargoRankingPointThreshold int
+	LowerCargo                 int
+	UpperCargo                 int
+	TotalCargo                 int
+	AutoPoints                 int
+	TeleopPoints               int
+	EndgamePoints              int
+	FoulPoints                 int
+	Score                      int
+	CargoRankingPoint          bool
+	EndgameRankingPoint        bool
 }
 
 // Represents the state of a robot at the end of the match.
@@ -79,20 +80,17 @@ func (score *Score) Summarize(opponentFouls []Foul, teleopStarted bool) *ScoreSu
 		summary.TeleopCargoPoints
 
 	// Calculate cargo bonus RP.
-	cargoRPThreshold := 20
+	summary.CargoRankingPointThreshold = 20
 
 	if score.AutoCargoLower+score.AutoCargoUpper >= 5 {
-		cargoRPThreshold = 18
+		summary.CargoRankingPointThreshold = 18
 	}
 
 	summary.LowerCargo = score.AutoCargoLower + score.TeleopCargoLower
 	summary.UpperCargo = score.AutoCargoUpper + score.TeleopCargoUpper
-	summary.CargoRankingPoint = summary.UpperCargo+summary.LowerCargo >= cargoRPThreshold
+	summary.TotalCargo = summary.LowerCargo + summary.UpperCargo
 
-	summary.CargoLeftForCargoRankingPoint = cargoRPThreshold - cargoRPThreshold
-	if summary.CargoLeftForCargoRankingPoint < 0 {
-		summary.CargoLeftForCargoRankingPoint = 0
-	}
+	summary.CargoRankingPoint = summary.TotalCargo >= summary.CargoRankingPointThreshold
 
 	// Calculate endgame points.
 	for _, endgameStatus := range score.EndgameStatuses {

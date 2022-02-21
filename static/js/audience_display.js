@@ -27,8 +27,8 @@ var logoUp = "10px";
 var logoDown = $("#logo").css("top");
 var scoreIn = $(".score").css("width");
 var scoreMid = "135px";
-var scoreOut = "255px";
-var scoreFieldsOut = "40px";
+var scoreOut = "350px";
+var scoreFieldsOut = "140px";
 
 // Handles a websocket message to change which screen is displayed.
 var handleAudienceDisplayMode = function(targetScreen) {
@@ -90,6 +90,11 @@ var handleRealtimeScore = function(data) {
   setCargoText($("#" + blueSide + "Upper"), data.Blue.ScoreSummary.UpperCargo);
   setCargoText($("#" + redSide + "Lower"), data.Red.ScoreSummary.LowerCargo);
   setCargoText($("#" + blueSide + "Lower"), data.Blue.ScoreSummary.LowerCargo);
+
+  setCargoText($("#" + redSide + "TotalCargo"), data.Red.ScoreSummary.TotalCargo + "/");
+  setCargoText($("#" + blueSide + "TotalCargo"), + data.Blue.ScoreSummary.TotalCargo + "/");
+  setCargoText($("#" + redSide + "RankingPointThreshold"), data.Red.ScoreSummary.CargoRankingPointThreshold);
+  setCargoText($("#" + blueSide + "RankingPointThreshold"), data.Blue.ScoreSummary.CargoRankingPointThreshold);
 };
 
 // Handles a websocket message to populate the final score data.
