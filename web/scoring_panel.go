@@ -7,16 +7,16 @@ package web
 
 import (
 	"fmt"
-	"github.com/Team254/cheesy-arena/field"
-	"github.com/Team254/cheesy-arena/game"
-	"github.com/Team254/cheesy-arena/model"
-	"github.com/Team254/cheesy-arena/websocket"
-	"github.com/gorilla/mux"
 	"io"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/Team254/cheesy-arena/field"
+	"github.com/Team254/cheesy-arena/model"
+	"github.com/Team254/cheesy-arena/websocket"
+	"github.com/gorilla/mux"
 )
 
 // Renders the scoring interface which enables input of scores in real-time.
@@ -111,12 +111,12 @@ func (web *Web) scoringPanelWebsocketHandler(w http.ResponseWriter, r *http.Requ
 			// Handle per-robot scoring fields.
 			if number <= 3 {
 				index := number - 1
-				score.ExitedInitiationLine[index] = !score.ExitedInitiationLine[index]
+				score.ExitedTarmac[index] = !score.ExitedTarmac[index]
 				scoreChanged = true
 			} else {
 				index := number - 4
 				score.EndgameStatuses[index]++
-				if score.EndgameStatuses[index] == 3 {
+				if score.EndgameStatuses[index] == 5 {
 					score.EndgameStatuses[index] = 0
 				}
 				scoreChanged = true
@@ -124,90 +124,28 @@ func (web *Web) scoringPanelWebsocketHandler(w http.ResponseWriter, r *http.Requ
 		} else {
 			switch strings.ToUpper(command) {
 			case "Q":
-				if decrementGoal(score.AutoCellsInner[:],
-					score.CellCountingStage(web.arena.MatchState >= field.TeleopPeriod)) {
-					scoreChanged = true
-				}
-			case "A":
-				if decrementGoal(score.AutoCellsOuter[:],
-					score.CellCountingStage(web.arena.MatchState >= field.TeleopPeriod)) {
-					scoreChanged = true
-				}
-			case "Z":
-				if decrementGoal(score.AutoCellsBottom[:],
-					score.CellCountingStage(web.arena.MatchState >= field.TeleopPeriod)) {
-					scoreChanged = true
-				}
+				score.AutoCargoUpper--
+				scoreChanged = true
 			case "W":
-				if incrementGoal(score.AutoCellsInner[:],
-					score.CellCountingStage(web.arena.MatchState >= field.TeleopPeriod)) {
-					scoreChanged = true
-				}
+				score.AutoCargoUpper++
+				scoreChanged = true
+			case "A":
+				score.AutoCargoLower--
+				scoreChanged = true
 			case "S":
-				if incrementGoal(score.AutoCellsOuter[:],
-					score.CellCountingStage(web.arena.MatchState >= field.TeleopPeriod)) {
-					scoreChanged = true
-				}
-			case "X":
-				if incrementGoal(score.AutoCellsBottom[:],
-					score.CellCountingStage(web.arena.MatchState >= field.TeleopPeriod)) {
-					scoreChanged = true
-				}
+				score.AutoCargoLower++
+				scoreChanged = true
 			case "E":
-				if decrementGoal(score.TeleopCellsInner[:],
-					score.CellCountingStage(web.arena.MatchState >= field.TeleopPeriod)) {
-					scoreChanged = true
-				}
-			case "D":
-				if decrementGoal(score.TeleopCellsOuter[:],
-					score.CellCountingStage(web.arena.MatchState >= field.TeleopPeriod)) {
-					scoreChanged = true
-				}
-			case "C":
-				if decrementGoal(score.TeleopCellsBottom[:],
-					score.CellCountingStage(web.arena.MatchState >= field.TeleopPeriod)) {
-					scoreChanged = true
-				}
+				score.TeleopCargoUpper--
+				scoreChanged = true
 			case "R":
-				if incrementGoal(score.TeleopCellsInner[:],
-					score.CellCountingStage(web.arena.MatchState >= field.TeleopPeriod)) {
-					scoreChanged = true
-				}
+				score.TeleopCargoUpper++
+				scoreChanged = true
+			case "D":
+				score.TeleopCargoLower--
+				scoreChanged = true
 			case "F":
-				if incrementGoal(score.TeleopCellsOuter[:],
-					score.CellCountingStage(web.arena.MatchState >= field.TeleopPeriod)) {
-					scoreChanged = true
-				}
-			case "V":
-				if incrementGoal(score.TeleopCellsBottom[:],
-					score.CellCountingStage(web.arena.MatchState >= field.TeleopPeriod)) {
-					scoreChanged = true
-				}
-			case "O":
-				if score.ControlPanelStatus >= game.ControlPanelRotation {
-					score.ControlPanelStatus = game.ControlPanelNone
-				} else if score.StageAtCapacity(game.Stage2, true) {
-					score.ControlPanelStatus = game.ControlPanelRotation
-				}
-				scoreChanged = true
-			case "K":
-				if score.ControlPanelStatus == game.ControlPanelRotation {
-					controlPanel := &(*realtimeScore).ControlPanel
-					controlPanel.CurrentColor++
-					if controlPanel.CurrentColor == 5 {
-						controlPanel.CurrentColor = 1
-					}
-					scoreChanged = true
-				}
-			case "P":
-				if score.ControlPanelStatus == game.ControlPanelPosition {
-					score.ControlPanelStatus = game.ControlPanelRotation
-				} else if score.StageAtCapacity(game.Stage3, true) {
-					score.ControlPanelStatus = game.ControlPanelPosition
-				}
-				scoreChanged = true
-			case "L":
-				score.RungIsLevel = !score.RungIsLevel
+				score.TeleopCargoLower++
 				scoreChanged = true
 			}
 		}
@@ -216,22 +154,4 @@ func (web *Web) scoringPanelWebsocketHandler(w http.ResponseWriter, r *http.Requ
 			web.arena.RealtimeScoreNotifier.Notify()
 		}
 	}
-}
-
-// Increments the power cell count for the given goal, if the preconditions are met.
-func incrementGoal(goal []int, currentStage game.Stage) bool {
-	if int(currentStage) < len(goal) {
-		goal[currentStage]++
-		return true
-	}
-	return false
-}
-
-// Decrements the power cell count for the given goal, if the preconditions are met.
-func decrementGoal(goal []int, currentStage game.Stage) bool {
-	if int(currentStage) < len(goal) && goal[currentStage] > 0 {
-		goal[currentStage]--
-		return true
-	}
-	return false
 }

@@ -7,11 +7,12 @@ package field
 
 import (
 	"fmt"
+	"strconv"
+
 	"github.com/Team254/cheesy-arena/game"
 	"github.com/Team254/cheesy-arena/model"
 	"github.com/Team254/cheesy-arena/network"
 	"github.com/Team254/cheesy-arena/websocket"
-	"strconv"
 )
 
 type ArenaNotifiers struct {
@@ -40,7 +41,6 @@ type MatchTimeMessage struct {
 type audienceAllianceScoreFields struct {
 	Score        *game.Score
 	ScoreSummary *game.ScoreSummary
-	ControlPanel *game.ControlPanel
 }
 
 // Instantiates notifiers and configures their message producing methods.
@@ -93,9 +93,11 @@ func (arena *Arena) generateArenaStatusMessage() interface{} {
 		PlcIsHealthy          bool
 		FieldEstop            bool
 		PlcArmorBlockStatuses map[string]bool
-	}{arena.CurrentMatch.Id, arena.AllianceStations, teamWifiStatuses, arena.MatchState,
+	}{
+		arena.CurrentMatch.Id, arena.AllianceStations, teamWifiStatuses, arena.MatchState,
 		arena.checkCanStartMatch() == nil, arena.Plc.IsHealthy, arena.Plc.GetFieldEstop(),
-		arena.Plc.GetArmorBlockStatuses()}
+		arena.Plc.GetArmorBlockStatuses(),
+	}
 }
 
 func (arena *Arena) generateAudienceDisplayModeMessage() interface{} {
@@ -215,11 +217,13 @@ func (arena *Arena) generateScorePostedMessage() interface{} {
 		BlueCards        map[string]string
 		SeriesStatus     string
 		SeriesLeader     string
-	}{arena.SavedMatch.CapitalizedType(), arena.SavedMatch, arena.SavedMatchResult.RedScoreSummary(true),
+	}{
+		arena.SavedMatch.CapitalizedType(), arena.SavedMatch, arena.SavedMatchResult.RedScoreSummary(true),
 		arena.SavedMatchResult.BlueScoreSummary(true), rankings, arena.SavedMatchResult.RedScore.Fouls,
 		arena.SavedMatchResult.BlueScore.Fouls,
 		getRulesViolated(arena.SavedMatchResult.RedScore.Fouls, arena.SavedMatchResult.BlueScore.Fouls),
-		arena.SavedMatchResult.RedCards, arena.SavedMatchResult.BlueCards, seriesStatus, seriesLeader}
+		arena.SavedMatchResult.RedCards, arena.SavedMatchResult.BlueCards, seriesStatus, seriesLeader,
+	}
 }
 
 func (arena *Arena) generateScoringStatusMessage() interface{} {
@@ -231,10 +235,12 @@ func (arena *Arena) generateScoringStatusMessage() interface{} {
 		NumRedScoringPanelsReady  int
 		NumBlueScoringPanels      int
 		NumBlueScoringPanelsReady int
-	}{arena.RedRealtimeScore.FoulsCommitted && arena.BlueRealtimeScore.FoulsCommitted,
+	}{
+		arena.RedRealtimeScore.FoulsCommitted && arena.BlueRealtimeScore.FoulsCommitted,
 		arena.alliancePostMatchScoreReady("red"), arena.alliancePostMatchScoreReady("blue"),
 		arena.ScoringPanelRegistry.GetNumPanels("red"), arena.ScoringPanelRegistry.GetNumScoreCommitted("red"),
-		arena.ScoringPanelRegistry.GetNumPanels("blue"), arena.ScoringPanelRegistry.GetNumScoreCommitted("blue")}
+		arena.ScoringPanelRegistry.GetNumPanels("blue"), arena.ScoringPanelRegistry.GetNumScoreCommitted("blue"),
+	}
 }
 
 // Constructs the data object for one alliance sent to the audience display for the realtime scoring overlay.
@@ -243,7 +249,6 @@ func getAudienceAllianceScoreFields(allianceScore *RealtimeScore,
 	fields := new(audienceAllianceScoreFields)
 	fields.Score = &allianceScore.CurrentScore
 	fields.ScoreSummary = allianceScoreSummary
-	fields.ControlPanel = &allianceScore.ControlPanel
 	return fields
 }
 

@@ -86,15 +86,15 @@ var handleRealtimeScore = function(data) {
   $("#" + redSide + "ScoreNumber").text(data.Red.ScoreSummary.Score - data.Red.ScoreSummary.EndgamePoints);
   $("#" + blueSide + "ScoreNumber").text(data.Blue.ScoreSummary.Score - data.Blue.ScoreSummary.EndgamePoints);
 
-  for (var i = 0; i < 3; i++) {
-    var i1 = i + 1;
-    setPowerCellText($("#" + redSide + "Stage" + i1), data.Red.ScoreSummary, i);
-    setPowerCellText($("#" + blueSide + "Stage" + i1), data.Blue.ScoreSummary, i);
-  }
+  setCargoText($("#" + redSide + "Upper"), data.Red.ScoreSummary.UpperCargo);
+  setCargoText($("#" + blueSide + "Upper"), data.Blue.ScoreSummary.UpperCargo);
+  setCargoText($("#" + redSide + "Lower"), data.Red.ScoreSummary.LowerCargo);
+  setCargoText($("#" + blueSide + "Lower"), data.Blue.ScoreSummary.LowerCargo);
 };
 
 // Handles a websocket message to populate the final score data.
 var handleScorePosted = function(data) {
+  console.log(data)
   $("#" + redSide + "FinalScore").text(data.RedScoreSummary.Score);
   $("#" + redSide + "FinalTeam1").html(getRankingText(data.Match.Red1, data.Rankings) + "" + data.Match.Red1);
   $("#" + redSide + "FinalTeam2").html(getRankingText(data.Match.Red2, data.Rankings) + "" + data.Match.Red2);
@@ -102,13 +102,12 @@ var handleScorePosted = function(data) {
   $("#" + redSide + "FinalTeam1Avatar").attr("src", getAvatarUrl(data.Match.Red1));
   $("#" + redSide + "FinalTeam2Avatar").attr("src", getAvatarUrl(data.Match.Red2));
   $("#" + redSide + "FinalTeam3Avatar").attr("src", getAvatarUrl(data.Match.Red3));
-  $("#" + redSide + "FinalInitiationLinePoints").text(data.RedScoreSummary.InitiationLinePoints);
-  $("#" + redSide + "FinalPowerCellPoints").text(data.RedScoreSummary.PowerCellPoints);
-  $("#" + redSide + "FinalControlPanelPoints").text(data.RedScoreSummary.ControlPanelPoints);
+  $("#" + redSide + "FinalExitedTarmacPoints").text(data.RedScoreSummary.ExitedTarmacPoints);
+  $("#" + redSide + "FinalCargoPoints").text(data.RedScoreSummary.CargoPoints);
   $("#" + redSide + "FinalEndgamePoints").text(data.RedScoreSummary.EndgamePoints);
   $("#" + redSide + "FinalFoulPoints").text(data.RedScoreSummary.FoulPoints);
-  $("#" + redSide + "FinalControlPanelRankingPoint").html(data.RedScoreSummary.ControlPanelRankingPoint ? "&#x2714;" : "&#x2718;");
-  $("#" + redSide + "FinalControlPanelRankingPoint").attr("data-checked", data.RedScoreSummary.ControlPanelRankingPoint);
+  $("#" + redSide + "FinalCargoRankingPoint").html(data.RedScoreSummary.CargoRankingPoint ? "&#x2714;" : "&#x2718;");
+  $("#" + redSide + "FinalCargoRankingPoint").attr("data-checked", data.RedScoreSummary.CargoRankingPoint);
   $("#" + redSide + "FinalEndgameRankingPoint").html(data.RedScoreSummary.EndgameRankingPoint ? "&#x2714;" : "&#x2718;");
   $("#" + redSide + "FinalEndgameRankingPoint").attr("data-checked", data.RedScoreSummary.EndgameRankingPoint);
   $("#" + blueSide + "FinalScore").text(data.BlueScoreSummary.Score);
@@ -118,13 +117,12 @@ var handleScorePosted = function(data) {
   $("#" + blueSide + "FinalTeam1Avatar").attr("src", getAvatarUrl(data.Match.Blue1));
   $("#" + blueSide + "FinalTeam2Avatar").attr("src", getAvatarUrl(data.Match.Blue2));
   $("#" + blueSide + "FinalTeam3Avatar").attr("src", getAvatarUrl(data.Match.Blue3));
-  $("#" + blueSide + "FinalInitiationLinePoints").text(data.BlueScoreSummary.InitiationLinePoints);
-  $("#" + blueSide + "FinalPowerCellPoints").text(data.BlueScoreSummary.PowerCellPoints);
-  $("#" + blueSide + "FinalControlPanelPoints").text(data.BlueScoreSummary.ControlPanelPoints);
+  $("#" + blueSide + "FinalExitedTarmacPoints").text(data.BlueScoreSummary.ExitedTarmacPoints);
+  $("#" + blueSide + "FinalCargoPoints").text(data.BlueScoreSummary.CargoPoints);
   $("#" + blueSide + "FinalEndgamePoints").text(data.BlueScoreSummary.EndgamePoints);
   $("#" + blueSide + "FinalFoulPoints").text(data.BlueScoreSummary.FoulPoints);
-  $("#" + blueSide + "FinalControlPanelRankingPoint").html(data.BlueScoreSummary.ControlPanelRankingPoint ? "&#x2714;" : "&#x2718;");
-  $("#" + blueSide + "FinalControlPanelRankingPoint").attr("data-checked", data.BlueScoreSummary.ControlPanelRankingPoint);
+  $("#" + blueSide + "FinalCargoRankingPoint").html(data.BlueScoreSummary.CargoRankingPoint ? "&#x2714;" : "&#x2718;");
+  $("#" + blueSide + "FinalCargoRankingPoint").attr("data-checked", data.BlueScoreSummary.CargoRankingPoint);
   $("#" + blueSide + "FinalEndgameRankingPoint").html(data.BlueScoreSummary.EndgameRankingPoint ? "&#x2714;" : "&#x2718;");
   $("#" + blueSide + "FinalEndgameRankingPoint").attr("data-checked", data.BlueScoreSummary.EndgameRankingPoint);
   $("#finalSeriesStatus").text(data.SeriesStatus);
@@ -476,17 +474,8 @@ var getAvatarUrl = function(teamId) {
 };
 
 // Populates the given element on the overlay to represent the given power cell stage.
-var setPowerCellText = function(element, scoreSummary, stage) {
-  var text = "&nbsp;";
-  var opacity = 1;
-  if (scoreSummary.StagesActivated[stage]) {
-    text = "I".repeat(stage + 1);
-    opacity = 0.4;
-  } else if (stage === 0 || scoreSummary.StagesActivated[stage - 1]) {
-    text = scoreSummary.StagePowerCellsRemaining[stage];
-  }
-  element.html(text);
-  element.css("opacity", opacity);
+var setCargoText = function(element, cargoAmount) {
+  element.html(cargoAmount);
 };
 
 var getRankingText = function(teamId, rankings) {

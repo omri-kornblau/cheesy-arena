@@ -6,6 +6,10 @@ package web
 import (
 	"bytes"
 	"fmt"
+	"log"
+	"testing"
+	"time"
+
 	"github.com/Team254/cheesy-arena/field"
 	"github.com/Team254/cheesy-arena/game"
 	"github.com/Team254/cheesy-arena/model"
@@ -14,9 +18,6 @@ import (
 	gorillawebsocket "github.com/gorilla/websocket"
 	"github.com/mitchellh/mapstructure"
 	"github.com/stretchr/testify/assert"
-	"log"
-	"testing"
-	"time"
 )
 
 func TestMatchPlay(t *testing.T) {
@@ -52,8 +53,10 @@ func TestMatchPlayLoad(t *testing.T) {
 	web.arena.Database.CreateTeam(&model.Team{Id: 104})
 	web.arena.Database.CreateTeam(&model.Team{Id: 105})
 	web.arena.Database.CreateTeam(&model.Team{Id: 106})
-	match := model.Match{Type: "elimination", DisplayName: "QF4-3", Status: model.RedWonMatch, Red1: 101,
-		Red2: 102, Red3: 103, Blue1: 104, Blue2: 105, Blue3: 106}
+	match := model.Match{
+		Type: "elimination", DisplayName: "QF4-3", Status: model.RedWonMatch, Red1: 101,
+		Red2: 102, Red3: 103, Blue1: 104, Blue2: 105, Blue3: 106,
+	}
 	web.arena.Database.CreateMatch(&match)
 	recorder := web.getHttpResponse("/match_play")
 	assert.Equal(t, 200, recorder.Code)
@@ -132,7 +135,7 @@ func TestCommitMatch(t *testing.T) {
 	assert.Nil(t, web.arena.Database.CreateMatch(match))
 	matchResult = model.NewMatchResult()
 	matchResult.MatchId = match.Id
-	matchResult.BlueScore = &game.Score{ExitedInitiationLine: [3]bool{true, false, false}}
+	matchResult.BlueScore = &game.Score{ExitedTarmac: [3]bool{true, false, false}}
 	err = web.commitMatchScore(match, matchResult, true)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, matchResult.PlayNumber)
@@ -141,7 +144,7 @@ func TestCommitMatch(t *testing.T) {
 
 	matchResult = model.NewMatchResult()
 	matchResult.MatchId = match.Id
-	matchResult.RedScore = &game.Score{ExitedInitiationLine: [3]bool{true, false, true}}
+	matchResult.RedScore = &game.Score{ExitedTarmac: [3]bool{true, false, true}}
 	err = web.commitMatchScore(match, matchResult, true)
 	assert.Nil(t, err)
 	assert.Equal(t, 2, matchResult.PlayNumber)
@@ -177,7 +180,8 @@ func TestCommitEliminationTie(t *testing.T) {
 		MatchId: match.Id,
 		RedScore: &game.Score{
 			TeleopCellsInner: [4]int{1, 2, 0, 0},
-			Fouls:            []game.Foul{{RuleId: 1}, {RuleId: 2}, {RuleId: 4}}},
+			Fouls:            []game.Foul{{RuleId: 1}, {RuleId: 2}, {RuleId: 4}},
+		},
 		BlueScore: &game.Score{},
 	}
 	err := web.commitMatchScore(match, matchResult, true)
@@ -309,11 +313,11 @@ func TestMatchPlayWebsocketCommands(t *testing.T) {
 	readWebsocketType(t, ws, "allianceStationDisplayMode")
 	assert.Equal(t, field.PostMatch, web.arena.MatchState)
 	web.arena.RedRealtimeScore.CurrentScore.TeleopCellsOuter = [4]int{1, 1, 1, 4}
-	web.arena.BlueRealtimeScore.CurrentScore.ExitedInitiationLine = [3]bool{true, false, true}
+	web.arena.BlueRealtimeScore.CurrentScore.ExitedTarmac = [3]bool{true, false, true}
 	ws.Write("commitResults", nil)
 	readWebsocketMultiple(t, ws, 3) // reload, realtimeScore, setAllianceStationDisplay
 	assert.Equal(t, [4]int{1, 1, 1, 4}, web.arena.SavedMatchResult.RedScore.TeleopCellsOuter)
-	assert.Equal(t, [3]bool{true, false, true}, web.arena.SavedMatchResult.BlueScore.ExitedInitiationLine)
+	assert.Equal(t, [3]bool{true, false, true}, web.arena.SavedMatchResult.BlueScore.ExitedTarmac)
 	assert.Equal(t, field.PreMatch, web.arena.MatchState)
 	ws.Write("discardResults", nil)
 	readWebsocketMultiple(t, ws, 3) // reload, realtimeScore, setAllianceStationDisplay

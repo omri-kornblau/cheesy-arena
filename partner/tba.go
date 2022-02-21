@@ -11,11 +11,12 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/Team254/cheesy-arena/game"
-	"github.com/Team254/cheesy-arena/model"
 	"io/ioutil"
 	"net/http"
 	"strconv"
+
+	"github.com/Team254/cheesy-arena/game"
+	"github.com/Team254/cheesy-arena/model"
 )
 
 const (
@@ -137,15 +138,21 @@ type TbaPublishedAward struct {
 	Awardee string `json:"awardee"`
 }
 
-var exitedInitLineMapping = map[bool]string{false: "None", true: "Exited"}
-var controlPanelColorMapping = map[game.ControlPanelColor]string{game.ColorUnknown: "Unknown", game.ColorRed: "Red",
-	game.ColorGreen: "Green", game.ColorBlue: "Blue", game.ColorYellow: "Yellow"}
-var endgameMapping = []string{"None", "Park", "Hang"}
-var rungIsLevelMapping = map[bool]string{false: "NotLevel", true: "IsLevel"}
+var exitedInitLineMapping = map[bool]string{false: "None", true: "Exited"} // controlPanelColorMapping = map[game.ControlPanelColor]string{
+// game.ColorUnknown: "Unknown", game.ColorRed: "Red",
+// game.ColorGreen: "Green", game.ColorBlue: "Blue", game.ColorYellow: "Yellow",
+//}
+
+var (
+	endgameMapping     = []string{"None", "Park", "Hang"}
+	rungIsLevelMapping = map[bool]string{false: "NotLevel", true: "IsLevel"}
+)
 
 func NewTbaClient(eventCode, secretId, secret string) *TbaClient {
-	return &TbaClient{BaseUrl: tbaBaseUrl, eventCode: eventCode, secretId: secretId, secret: secret,
-		eventNamesCache: make(map[string]string)}
+	return &TbaClient{
+		BaseUrl: tbaBaseUrl, eventCode: eventCode, secretId: secretId, secret: secret,
+		eventNamesCache: make(map[string]string),
+	}
 }
 
 func (client *TbaClient) GetTeam(teamNumber int) (*TbaTeam, error) {
@@ -335,13 +342,17 @@ func (client *TbaClient) PublishMatches(database *model.Database) error {
 			}
 		}
 		alliances := make(map[string]*TbaAlliance)
-		alliances["red"] = createTbaAlliance([3]int{match.Red1, match.Red2, match.Red3}, [3]bool{match.Red1IsSurrogate,
-			match.Red2IsSurrogate, match.Red3IsSurrogate}, redScore, redCards)
+		alliances["red"] = createTbaAlliance([3]int{match.Red1, match.Red2, match.Red3}, [3]bool{
+			match.Red1IsSurrogate,
+			match.Red2IsSurrogate, match.Red3IsSurrogate,
+		}, redScore, redCards)
 		alliances["blue"] = createTbaAlliance([3]int{match.Blue1, match.Blue2, match.Blue3},
 			[3]bool{match.Blue1IsSurrogate, match.Blue2IsSurrogate, match.Blue3IsSurrogate}, blueScore, blueCards)
 
-		tbaMatches[i] = TbaMatch{"qm", 0, matchNumber, alliances, scoreBreakdown, match.Time.Local().Format("3:04 PM"),
-			match.Time.UTC().Format("2006-01-02T15:04:05")}
+		tbaMatches[i] = TbaMatch{
+			"qm", 0, matchNumber, alliances, scoreBreakdown, match.Time.Local().Format("3:04 PM"),
+			match.Time.UTC().Format("2006-01-02T15:04:05"),
+		}
 		if match.Type == "elimination" {
 			tbaMatches[i].CompLevel = map[int]string{1: "f", 2: "sf", 4: "qf", 8: "ef"}[match.ElimRound]
 			tbaMatches[i].SetNumber = match.ElimGroup
@@ -376,11 +387,13 @@ func (client *TbaClient) PublishRankings(database *model.Database) error {
 	breakdowns := []string{"RP", "Auto", "Endgame", "Teleop", "WinLossTie"}
 	tbaRankings := make([]TbaRanking, len(rankings))
 	for i, ranking := range rankings {
-		tbaRankings[i] = TbaRanking{getTbaTeam(ranking.TeamId), ranking.Rank,
+		tbaRankings[i] = TbaRanking{
+			getTbaTeam(ranking.TeamId), ranking.Rank,
 			float32(ranking.RankingPoints) / float32(ranking.Played), ranking.AutoPoints, ranking.EndgamePoints,
 			ranking.TeleopPoints,
 			fmt.Sprintf("%d-%d-%d", ranking.Wins, ranking.Losses, ranking.Ties), ranking.Disqualifications,
-			ranking.Played}
+			ranking.Played,
+		}
 	}
 	jsonBody, err := json.Marshal(TbaRankings{breakdowns, tbaRankings})
 	if err != nil {
@@ -533,23 +546,23 @@ func createTbaScoringBreakdown(match *model.Match, matchResult *model.MatchResul
 		opponentScoreSummary = matchResult.RedScoreSummary(true)
 	}
 
-	breakdown.InitLineRobot1 = exitedInitLineMapping[score.ExitedInitiationLine[0]]
-	breakdown.InitLineRobot2 = exitedInitLineMapping[score.ExitedInitiationLine[1]]
-	breakdown.InitLineRobot3 = exitedInitLineMapping[score.ExitedInitiationLine[2]]
-	breakdown.AutoCellsBottom = sumPowerCells(score.AutoCellsBottom[:])
-	breakdown.AutoCellsOuter = sumPowerCells(score.AutoCellsOuter[:])
-	breakdown.AutoCellsInner = sumPowerCells(score.AutoCellsInner[:])
-	breakdown.TeleopCellsBottom = sumPowerCells(score.TeleopCellsBottom[:])
-	breakdown.TeleopCellsOuter = sumPowerCells(score.TeleopCellsOuter[:])
-	breakdown.TeleopCellsInner = sumPowerCells(score.TeleopCellsInner[:])
-	breakdown.Stage1Activated = scoreSummary.StagesActivated[0]
-	breakdown.Stage2Activated = scoreSummary.StagesActivated[1]
-	breakdown.Stage3Activated = scoreSummary.StagesActivated[2]
-	breakdown.Stage3TargetColor = controlPanelColorMapping[score.PositionControlTargetColor]
+	breakdown.InitLineRobot1 = exitedInitLineMapping[score.ExitedTarmac[0]]
+	breakdown.InitLineRobot2 = exitedInitLineMapping[score.ExitedTarmac[1]]
+	breakdown.InitLineRobot3 = exitedInitLineMapping[score.ExitedTarmac[2]]
+	// breakdown.AutoCellsBottom = sumPowerCells(score.AutoCellsBottom[:])
+	// breakdown.AutoCellsOuter = sumPowerCells(score.AutoCellsOuter[:])
+	// breakdown.AutoCellsInner = sumPowerCells(score.AutoCellsInner[:])
+	// breakdown.TeleopCellsBottom = sumPowerCells(score.TeleopCellsBottom[:])
+	// breakdown.TeleopCellsOuter = sumPowerCells(score.TeleopCellsOuter[:])
+	// breakdown.TeleopCellsInner = sumPowerCells(score.TeleopCellsInner[:])
+	// breakdown.Stage1Activated = scoreSummary.StagesActivated[0]
+	// breakdown.Stage2Activated = scoreSummary.StagesActivated[1]
+	// breakdown.Stage3Activated = scoreSummary.StagesActivated[2]
+	// breakdown.Stage3TargetColor = controlPanelColorMapping[score.PositionControlTargetColor]
 	breakdown.EndgameRobot1 = endgameMapping[score.EndgameStatuses[0]]
 	breakdown.EndgameRobot2 = endgameMapping[score.EndgameStatuses[1]]
 	breakdown.EndgameRobot3 = endgameMapping[score.EndgameStatuses[2]]
-	breakdown.EndgameRungIsLevel = rungIsLevelMapping[score.RungIsLevel]
+	// breakdown.EndgameRungIsLevel = rungIsLevelMapping[score.RungIsLevel]
 	for _, foul := range score.Fouls {
 		if foul.Rule() != nil && !foul.Rule().IsRankingPoint {
 			if foul.Rule().IsTechnical {
@@ -559,17 +572,17 @@ func createTbaScoringBreakdown(match *model.Match, matchResult *model.MatchResul
 			}
 		}
 	}
-	breakdown.AutoInitLinePoints = scoreSummary.InitiationLinePoints
-	breakdown.AutoCellPoints = scoreSummary.AutoPowerCellPoints
+	breakdown.AutoInitLinePoints = scoreSummary.ExitedTarmacPoints
+	// breakdown.AutoCellPoints = scoreSummary.AutoPowerCellPoints
 	breakdown.AutoPoints = scoreSummary.AutoPoints
-	breakdown.TeleopCellPoints = scoreSummary.TeleopPowerCellPoints
-	breakdown.ControlPanelPoints = scoreSummary.ControlPanelPoints
+	// breakdown.TeleopCellPoints = scoreSummary.TeleopPowerCellPoints
+	// breakdown.ControlPanelPoints = scoreSummary.ControlPanelPoints
 	breakdown.EndgamePoints = scoreSummary.EndgamePoints
-	breakdown.TeleopPoints = scoreSummary.TeleopPowerCellPoints + scoreSummary.ControlPanelPoints +
-		scoreSummary.EndgamePoints
+	// breakdown.TeleopPoints = scoreSummary.TeleopPowerCellPoints + scoreSummary.ControlPanelPoints +
+	// scoreSummary.EndgamePoints
 	breakdown.FoulPoints = scoreSummary.FoulPoints
 	breakdown.TotalPoints = scoreSummary.Score
-	breakdown.ShieldEnergizedRankingPoint = scoreSummary.ControlPanelRankingPoint
+	// breakdown.ShieldEnergizedRankingPoint = scoreSummary.ControlPanelRankingPoint
 	breakdown.ShieldOperationalRankingPoint = scoreSummary.EndgameRankingPoint
 
 	if match.ShouldUpdateRankings() {

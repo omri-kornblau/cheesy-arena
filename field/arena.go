@@ -7,13 +7,14 @@ package field
 
 import (
 	"fmt"
+	"log"
+	"time"
+
 	"github.com/Team254/cheesy-arena/game"
 	"github.com/Team254/cheesy-arena/model"
 	"github.com/Team254/cheesy-arena/network"
 	"github.com/Team254/cheesy-arena/partner"
 	"github.com/Team254/cheesy-arena/plc"
-	"log"
-	"time"
 )
 
 const (
@@ -164,12 +165,6 @@ func (arena *Arena) LoadSettings() error {
 	game.UpdateMatchSounds()
 	arena.MatchTimingNotifier.Notify()
 
-	game.StageCapacities[game.Stage1] = settings.Stage1Capacity
-	game.StageCapacities[game.Stage2] = settings.Stage2Capacity
-	game.StageCapacities[game.Stage3] = settings.Stage3Capacity
-	game.ControlPanelDisabled = settings.ControlPanelDisabled
-	game.CapacityWhenControlPanelDisabled = settings.CapacityWhenControlPanelDisabled
-
 	return nil
 }
 
@@ -205,9 +200,11 @@ func (arena *Arena) LoadMatch(match *model.Match) error {
 		return err
 	}
 
-	arena.setupNetwork([6]*model.Team{arena.AllianceStations["R1"].Team, arena.AllianceStations["R2"].Team,
+	arena.setupNetwork([6]*model.Team{
+		arena.AllianceStations["R1"].Team, arena.AllianceStations["R2"].Team,
 		arena.AllianceStations["R3"].Team, arena.AllianceStations["B1"].Team, arena.AllianceStations["B2"].Team,
-		arena.AllianceStations["B3"].Team})
+		arena.AllianceStations["B3"].Team,
+	})
 
 	// Reset the arena state and realtime scores.
 	arena.soundsPlayed = make(map[*game.MatchSound]struct{})
@@ -267,9 +264,11 @@ func (arena *Arena) SubstituteTeam(teamId int, station string) error {
 	case "B3":
 		arena.CurrentMatch.Blue3 = teamId
 	}
-	arena.setupNetwork([6]*model.Team{arena.AllianceStations["R1"].Team, arena.AllianceStations["R2"].Team,
+	arena.setupNetwork([6]*model.Team{
+		arena.AllianceStations["R1"].Team, arena.AllianceStations["R2"].Team,
 		arena.AllianceStations["R3"].Team, arena.AllianceStations["B1"].Team, arena.AllianceStations["B2"].Team,
-		arena.AllianceStations["B3"].Team})
+		arena.AllianceStations["B3"].Team,
+	})
 	arena.MatchLoadNotifier.Notify()
 
 	if arena.CurrentMatch.Type != "test" {
@@ -497,10 +496,6 @@ func (arena *Arena) Update() {
 
 	arena.handleSounds(matchTimeSec)
 
-	// Handle field sensors/lights/actuators.
-	arena.handlePlcInput()
-	arena.handlePlcOutput()
-
 	arena.LastMatchTimeSec = matchTimeSec
 	arena.lastMatchState = arena.MatchState
 }
@@ -609,8 +604,10 @@ func (arena *Arena) preLoadNextMatch() {
 	}
 
 	var teams [6]*model.Team
-	for i, teamId := range []int{nextMatch.Red1, nextMatch.Red2, nextMatch.Red3, nextMatch.Blue1, nextMatch.Blue2,
-		nextMatch.Blue3} {
+	for i, teamId := range []int{
+		nextMatch.Red1, nextMatch.Red2, nextMatch.Red3, nextMatch.Blue1, nextMatch.Blue2,
+		nextMatch.Blue3,
+	} {
 		if teamId == 0 {
 			continue
 		}
@@ -631,12 +628,16 @@ func (arena *Arena) setupNetwork(teams [6]*model.Team) {
 			}
 		} else {
 			// Two APs are being used. Configure the first for the red teams and the second for the blue teams.
-			if err := arena.accessPoint.ConfigureTeamWifi([6]*model.Team{teams[0], teams[1], teams[2], nil, nil,
-				nil}); err != nil {
+			if err := arena.accessPoint.ConfigureTeamWifi([6]*model.Team{
+				teams[0], teams[1], teams[2], nil, nil,
+				nil,
+			}); err != nil {
 				log.Printf("Failed to configure red alliance WiFi: %s", err.Error())
 			}
-			if err := arena.accessPoint2.ConfigureTeamWifi([6]*model.Team{nil, nil, nil, teams[3], teams[4],
-				teams[5]}); err != nil {
+			if err := arena.accessPoint2.ConfigureTeamWifi([6]*model.Team{
+				nil, nil, nil, teams[3], teams[4],
+				teams[5],
+			}); err != nil {
 				log.Printf("Failed to configure blue alliance WiFi: %s", err.Error())
 			}
 		}
@@ -708,23 +709,6 @@ func (arena *Arena) sendDsPacket(auto bool, enabled bool) {
 	arena.lastDsPacketTime = time.Now()
 }
 
-// Sends a game data packet encoded with the given Control Panel target color to the given stations.
-func (arena *Arena) sendGameDataPacket(color game.ControlPanelColor, stations ...string) {
-	gameData := game.GetGameDataForColor(color)
-	log.Printf("Sending game data packet '%s' to stations %v", gameData, stations)
-	for _, station := range stations {
-		if allianceStation, ok := arena.AllianceStations[station]; ok {
-			dsConn := allianceStation.DsConn
-			if dsConn != nil {
-				err := dsConn.sendGameDataPacket(gameData)
-				if err != nil {
-					log.Printf("Error sending game data packet to Team %d: %v", dsConn.TeamId, err)
-				}
-			}
-		}
-	}
-}
-
 // Returns the alliance station identifier for the given team, or the empty string if the team is not present
 // in the current match.
 func (arena *Arena) getAssignedAllianceStation(teamId int) string {
@@ -768,156 +752,9 @@ func (arena *Arena) handlePlcInput() {
 	oldRedScore := *redScore
 	blueScore := &arena.BlueRealtimeScore.CurrentScore
 	oldBlueScore := *blueScore
-	matchStartTime := arena.MatchStartTime
-	currentTime := time.Now()
-	teleopStarted := arena.MatchState >= TeleopPeriod
-
-	if arena.Plc.IsEnabled() {
-		// Handle power ports.
-		redPortCells, bluePortCells := arena.Plc.GetPowerPorts()
-		redPowerPort := &arena.RedRealtimeScore.powerPort
-		redPowerPort.UpdateState(redPortCells, redScore.CellCountingStage(teleopStarted), matchStartTime, currentTime)
-		redScore.AutoCellsBottom = redPowerPort.AutoCellsBottom
-		redScore.AutoCellsOuter = redPowerPort.AutoCellsOuter
-		redScore.AutoCellsInner = redPowerPort.AutoCellsInner
-		redScore.TeleopCellsBottom = redPowerPort.TeleopCellsBottom
-		redScore.TeleopCellsOuter = redPowerPort.TeleopCellsOuter
-		redScore.TeleopCellsInner = redPowerPort.TeleopCellsInner
-		bluePowerPort := &arena.BlueRealtimeScore.powerPort
-		bluePowerPort.UpdateState(bluePortCells, blueScore.CellCountingStage(teleopStarted), matchStartTime,
-			currentTime)
-		blueScore.AutoCellsBottom = bluePowerPort.AutoCellsBottom
-		blueScore.AutoCellsOuter = bluePowerPort.AutoCellsOuter
-		blueScore.AutoCellsInner = bluePowerPort.AutoCellsInner
-		blueScore.TeleopCellsBottom = bluePowerPort.TeleopCellsBottom
-		blueScore.TeleopCellsOuter = bluePowerPort.TeleopCellsOuter
-		blueScore.TeleopCellsInner = bluePowerPort.TeleopCellsInner
-
-		// Handle control panel.
-		if !arena.EventSettings.ControlPanelDisabled {
-			redColor, redSegmentCount, blueColor, blueSegmentCount := arena.Plc.GetControlPanels()
-			redControlPanel := &arena.RedRealtimeScore.ControlPanel
-			redControlPanel.CurrentColor = redColor
-			redControlPanel.UpdateState(redSegmentCount, redScore.StageAtCapacity(game.Stage2, teleopStarted),
-				redScore.StageAtCapacity(game.Stage3, teleopStarted), currentTime)
-			redScore.ControlPanelStatus = redControlPanel.ControlPanelStatus
-			blueControlPanel := &arena.BlueRealtimeScore.ControlPanel
-			blueControlPanel.CurrentColor = blueColor
-			blueControlPanel.UpdateState(blueSegmentCount, blueScore.StageAtCapacity(game.Stage2, teleopStarted),
-				blueScore.StageAtCapacity(game.Stage3, teleopStarted), currentTime)
-			blueScore.ControlPanelStatus = blueControlPanel.ControlPanelStatus
-		}
-
-		// Handle shield generator rungs.
-		if game.ShouldAssessRung(matchStartTime, currentTime) {
-			redScore.RungIsLevel, blueScore.RungIsLevel = arena.Plc.GetRungs()
-		}
-	}
-
-	if !arena.EventSettings.ControlPanelDisabled {
-		// Check if either alliance has reached Stage 3 capacity.
-		if redScore.StageAtCapacity(game.Stage3, arena.MatchState >= TeleopPeriod) &&
-			redScore.PositionControlTargetColor == game.ColorUnknown ||
-			blueScore.StageAtCapacity(game.Stage3, arena.MatchState >= TeleopPeriod) &&
-				blueScore.PositionControlTargetColor == game.ColorUnknown {
-			// Determine the position control target colors and send packets to inform the driver stations.
-			redScore.PositionControlTargetColor = arena.RedRealtimeScore.ControlPanel.GetPositionControlTargetColor()
-			blueScore.PositionControlTargetColor = arena.BlueRealtimeScore.ControlPanel.GetPositionControlTargetColor()
-			arena.sendGameDataPacket(redScore.PositionControlTargetColor, "R1", "R2", "R3")
-			arena.sendGameDataPacket(blueScore.PositionControlTargetColor, "B1", "B2", "B3")
-		}
-	}
 
 	if !oldRedScore.Equals(redScore) || !oldBlueScore.Equals(blueScore) {
 		arena.RealtimeScoreNotifier.Notify()
-	}
-}
-
-// Updates the PLC's coils based on its inputs and the current scoring state.
-func (arena *Arena) handlePlcOutput() {
-	matchStartTime := arena.MatchStartTime
-	currentTime := time.Now()
-	redScore := &arena.RedRealtimeScore.CurrentScore
-	blueScore := &arena.BlueRealtimeScore.CurrentScore
-
-	switch arena.MatchState {
-	case PreMatch:
-		if arena.lastMatchState != PreMatch {
-			arena.Plc.SetFieldResetLight(true)
-		}
-		fallthrough
-	case TimeoutActive:
-		fallthrough
-	case PostTimeout:
-		// Set the stack light state -- solid alliance color(s) if robots are not connected, solid orange if scores are
-		// not input, or blinking green if ready.
-		redAllianceReady := arena.checkAllianceStationsReady("R1", "R2", "R3") == nil
-		blueAllianceReady := arena.checkAllianceStationsReady("B1", "B2", "B3") == nil
-		greenStackLight := redAllianceReady && blueAllianceReady && arena.Plc.GetCycleState(2, 0, 2)
-		arena.Plc.SetStackLights(!redAllianceReady, !blueAllianceReady, false, greenStackLight)
-		arena.Plc.SetStackBuzzer(redAllianceReady && blueAllianceReady)
-
-		// Turn off lights if all teams become ready.
-		if redAllianceReady && blueAllianceReady {
-			arena.Plc.SetFieldResetLight(false)
-		}
-	case PostMatch:
-		if arena.FieldReset {
-			arena.Plc.SetFieldResetLight(true)
-		}
-		scoreReady := arena.RedRealtimeScore.FoulsCommitted && arena.BlueRealtimeScore.FoulsCommitted &&
-			arena.alliancePostMatchScoreReady("red") && arena.alliancePostMatchScoreReady("blue")
-		arena.Plc.SetStackLights(false, false, !scoreReady, false)
-
-		if arena.lastMatchState != PostMatch {
-			// Turn off the truss lights at the end of the match.
-			arena.Plc.SetStageActivatedLights([3]bool{false, false, false}, [3]bool{false, false, false})
-			go func() {
-				time.Sleep(time.Second * game.PowerPortTeleopGracePeriodSec)
-				arena.Plc.SetPowerPortMotors(false)
-				// Begin flashing lights on the truss to signal scoring of climbs.
-				for i := 0; i < 3; i++ {
-					arena.Plc.SetStageActivatedLights([3]bool{true, true, true}, [3]bool{true, true, true})
-					time.Sleep(time.Millisecond * game.RungAssessmentFlashPeriodMs)
-					arena.Plc.SetStageActivatedLights([3]bool{false, false, false}, [3]bool{false, false, false})
-					time.Sleep(time.Millisecond * game.RungAssessmentFlashPeriodMs)
-				}
-			}()
-		}
-		arena.Plc.SetControlPanelLights(false, false)
-	case AutoPeriod:
-		arena.Plc.SetPowerPortMotors(true)
-		fallthrough
-	case PausePeriod:
-		fallthrough
-	case TeleopPeriod:
-		arena.Plc.SetStageActivatedLights(arena.RedScoreSummary().StagesActivated,
-			arena.BlueScoreSummary().StagesActivated)
-
-		controlPanelLightState := func(state game.ControlPanelLightState) bool {
-			switch state {
-			case game.ControlPanelLightOn:
-				return true
-			case game.ControlPanelLightFlashing:
-				return arena.Plc.GetCycleState(2, 0, 2)
-			default:
-				return false
-			}
-		}
-		arena.Plc.SetControlPanelLights(
-			controlPanelLightState(arena.RedRealtimeScore.ControlPanel.ControlPanelLightState),
-			controlPanelLightState(arena.BlueRealtimeScore.ControlPanel.ControlPanelLightState))
-
-		// If the PLC reports a ball jam, blink the orange light and the power port color.
-		redJam, blueJam := arena.Plc.GetPowerPortJams()
-		blink := arena.Plc.GetCycleState(2, 0, 2)
-		arena.Plc.SetStackLights(redJam && blink, blueJam && blink, (redJam || blueJam) && !blink, true)
-	}
-
-	if game.ShouldAssessRung(matchStartTime, currentTime) {
-		arena.Plc.SetShieldGeneratorLights(redScore.RungIsLevel, blueScore.RungIsLevel)
-	} else {
-		arena.Plc.SetShieldGeneratorLights(false, false)
 	}
 }
 

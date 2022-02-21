@@ -7,12 +7,12 @@ package plc
 
 import (
 	"fmt"
-	"github.com/Team254/cheesy-arena/game"
-	"github.com/Team254/cheesy-arena/websocket"
-	"github.com/goburrow/modbus"
 	"log"
 	"strings"
 	"time"
+
+	"github.com/Team254/cheesy-arena/websocket"
+	"github.com/goburrow/modbus"
 )
 
 type Plc struct {
@@ -255,12 +255,6 @@ func (plc *Plc) GetPowerPorts() ([3]int, [3]int) {
 // Returns whether each of the red and blue power ports are jammed.
 func (plc *Plc) GetPowerPortJams() (bool, bool) {
 	return plc.inputs[redPowerPortJam], plc.inputs[bluePowerPortJam]
-}
-
-// Returns the current color and number of segment transitions for each of the red and blue control panels.
-func (plc *Plc) GetControlPanels() (game.ControlPanelColor, int, game.ControlPanelColor, int) {
-	return game.ControlPanelColor(plc.registers[redControlPanelColor]), int(plc.registers[redControlPanelSegments]),
-		game.ControlPanelColor(plc.registers[blueControlPanelColor]), int(plc.registers[blueControlPanelSegments])
 }
 
 // Returns whether each of the red and blue rungs is level.

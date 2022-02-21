@@ -51,7 +51,7 @@ func (fields *RankingFields) AddScoreSummary(ownScore *ScoreSummary, opponentSco
 	} else {
 		fields.Losses += 1
 	}
-	if ownScore.ControlPanelRankingPoint {
+	if ownScore.CargoRankingPoint {
 		fields.RankingPoints += 1
 	}
 	if ownScore.EndgameRankingPoint {
@@ -61,7 +61,7 @@ func (fields *RankingFields) AddScoreSummary(ownScore *ScoreSummary, opponentSco
 	// Assign tiebreaker points.
 	fields.AutoPoints += ownScore.AutoPoints
 	fields.EndgamePoints += ownScore.EndgamePoints
-	fields.TeleopPoints += ownScore.TeleopPowerCellPoints + ownScore.ControlPanelPoints
+	fields.TeleopPoints += ownScore.TeleopPoints
 }
 
 // Helper function to implement the required interface for Sort.

@@ -4,13 +4,14 @@
 package web
 
 import (
+	"testing"
+	"time"
+
 	"github.com/Team254/cheesy-arena/field"
 	"github.com/Team254/cheesy-arena/game"
 	"github.com/Team254/cheesy-arena/websocket"
 	gorillawebsocket "github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
-	"testing"
-	"time"
 )
 
 func TestScoringPanel(t *testing.T) {
@@ -66,7 +67,7 @@ func TestScoringPanelWebsocket(t *testing.T) {
 		readWebsocketType(t, redWs, "realtimeScore")
 		readWebsocketType(t, blueWs, "realtimeScore")
 	}
-	assert.Equal(t, [3]bool{true, false, true}, web.arena.RedRealtimeScore.CurrentScore.ExitedInitiationLine)
+	assert.Equal(t, [3]bool{true, false, true}, web.arena.RedRealtimeScore.CurrentScore.ExitedTarmac)
 	assert.Equal(t, [2]int{1, 0}, web.arena.RedRealtimeScore.CurrentScore.AutoCellsBottom)
 	assert.Equal(t, [2]int{0, 0}, web.arena.RedRealtimeScore.CurrentScore.AutoCellsOuter)
 	assert.Equal(t, [2]int{1, 0}, web.arena.RedRealtimeScore.CurrentScore.AutoCellsInner)

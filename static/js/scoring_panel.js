@@ -49,45 +49,20 @@ var handleRealtimeScore = function(data) {
   var score = realtimeScore.Score;
   var summary = realtimeScore.ScoreSummary;
 
+  console.log(score)
+
   for (var i = 0; i < 3; i++) {
     var i1 = i + 1;
-    $("#exitedInitiationLine" + i1 + ">.value").text(score.ExitedInitiationLine[i] ? "Yes" : "No");
-    $("#exitedInitiationLine" + i1).attr("data-value", score.ExitedInitiationLine[i]);
+    $("#exitedTarmac" + i1 + ">.value").text(score.ExitedTarmac[i] ? "Yes" : "No");
+    $("#exitedTarmac" + i1).attr("data-value", score.ExitedTarmac[i]);
     $("#endgameStatus" + i1 + ">.value").text(getEndgameStatusText(score.EndgameStatuses[i]));
     $("#endgameStatus" + i1).attr("data-value", score.EndgameStatuses[i]);
-    setGoalValue($("#autoCellsInner"), score.AutoCellsInner);
-    setGoalValue($("#autoCellsOuter"), score.AutoCellsOuter);
-    setGoalValue($("#autoCellsBottom"), score.AutoCellsBottom);
-    setGoalValue($("#teleopCellsInner"), score.TeleopCellsInner);
-    setGoalValue($("#teleopCellsOuter"), score.TeleopCellsOuter);
-    setGoalValue($("#teleopCellsBottom"), score.TeleopCellsBottom);
   }
 
-  if (score.ControlPanelStatus >= 1) {
-    $("#rotationControl>.value").text("Yes");
-    $("#rotationControl").attr("data-value", true);
-  } else if (summary.StagePowerCellsRemaining[1] === 0) {
-    $("#rotationControl>.value").text("Unlocked");
-    $("#rotationControl").attr("data-value", false);
-  } else {
-    $("#rotationControl>.value").text("Disabled (" + summary.StagePowerCellsRemaining[1] + " left)");
-    $("#rotationControl").attr("data-value", "disabled");
-  }
-  if (score.ControlPanelStatus === 2) {
-    $("#positionControl>.value").text("Yes");
-    $("#positionControl").attr("data-value", true);
-  } else if (summary.StagePowerCellsRemaining[2] === 0) {
-    $("#positionControl>.value").text("Unlocked");
-    $("#positionControl").attr("data-value", false);
-  } else {
-    $("#positionControl>.value").text("Disabled (" + summary.StagePowerCellsRemaining[2] + " left)");
-    $("#positionControl").attr("data-value", "disabled");
-  }
-  $("#rungIsLevel>.value").text(score.RungIsLevel ? "Yes" : "No");
-  $("#rungIsLevel").attr("data-value", score.RungIsLevel);
-  $("#controlPanelColor>.value").text(getControlPanelColorText(realtimeScore.ControlPanel.CurrentColor));
-  $("#controlPanelColor").attr("data-value", realtimeScore.ControlPanel.CurrentColor);
-  $("#controlPanelColor").attr("data-control-panel-status", score.ControlPanelStatus)
+  setGoalValue($("#autoCargoLower"), score.AutoCargoLower);
+  setGoalValue($("#autoCargoUpper"), score.AutoCargoUpper);
+  setGoalValue($("#teleopCargoLower"), score.TeleopCargoLower);
+  setGoalValue($("#teleopCargoUpper"), score.TeleopCargoUpper);
 };
 
 // Handles a keyboard event and sends the appropriate websocket message.
@@ -111,36 +86,20 @@ var commitMatchScore = function() {
 var getEndgameStatusText = function(level) {
   switch (level) {
     case 1:
-      return "Park";
+      return "Low";
     case 2:
-      return "Hang";
+      return "Mid";
+    case 3:
+      return "High";
+    case 4:
+      return "Traversal";
     default:
       return "None";
   }
 };
 
-// Returns the display text corresponding to the given integer Control Panel color value.
-var getControlPanelColorText = function(level) {
-  switch (level) {
-    case 1:
-      return "Red";
-    case 2:
-      return "Green";
-    case 3:
-      return "Blue";
-    case 4:
-      return "Yellow";
-    default:
-      return "Unknown";
-  }
-};
-
 // Updates the power cell count for a goal, given the element and score values.
-var setGoalValue = function(element, powerCells) {
-  var total = 0;
-  $.each(powerCells, function(k, v) {
-    total += v;
-  });
+var setGoalValue = function(element, total) {
   element.text(total);
 };
 

@@ -4,8 +4,9 @@
 package game
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestScoreSummary(t *testing.T) {
@@ -15,7 +16,7 @@ func TestScoreSummary(t *testing.T) {
 	blueScore := TestScore2()
 
 	redSummary := redScore.Summarize(blueScore.Fouls, true)
-	assert.Equal(t, 10, redSummary.InitiationLinePoints)
+	assert.Equal(t, 10, redSummary.ExitedTarmacPoints)
 	assert.Equal(t, 84, redSummary.AutoPowerCellPoints)
 	assert.Equal(t, 94, redSummary.AutoPoints)
 	assert.Equal(t, 38, redSummary.TeleopPowerCellPoints)
@@ -30,7 +31,7 @@ func TestScoreSummary(t *testing.T) {
 	assert.Equal(t, true, redSummary.EndgameRankingPoint)
 
 	blueSummary := blueScore.Summarize(redScore.Fouls, true)
-	assert.Equal(t, 5, blueSummary.InitiationLinePoints)
+	assert.Equal(t, 5, blueSummary.ExitedTarmacPoints)
 	assert.Equal(t, 12, blueSummary.AutoPowerCellPoints)
 	assert.Equal(t, 17, blueSummary.AutoPoints)
 	assert.Equal(t, 122, blueSummary.TeleopPowerCellPoints)
@@ -254,7 +255,7 @@ func TestScoreEquals(t *testing.T) {
 	assert.False(t, score3.Equals(score1))
 
 	score2 = TestScore1()
-	score2.ExitedInitiationLine[0] = false
+	score2.ExitedTarmac[0] = false
 	assert.False(t, score1.Equals(score2))
 	assert.False(t, score2.Equals(score1))
 
