@@ -27,7 +27,7 @@
   <div class="well well-{{"{{alliance}}"}}">
     <fieldset>
       <legend>Autonomous</legend>
-      <b>Exited Initiation Line</b>
+      <b>Exited Tarmac</b>
       <div class="form-group">
         <div class="row">
           {{range $i := seq 3}}
@@ -38,27 +38,13 @@
           {{end}}
         </div>
       </div>
-      <b>Power Cells</b>
-      {{template "powerCells" dict "period" "Auto" "stages" 2}}
+      <b>Cargos</b>
+      {{template "cargos" dict "period" "Auto"}}
     </fieldset>
     <fieldset>
       <legend>Teleoperated</legend>
-      <b>Power Cells</b>
-      {{template "powerCells" dict "period" "Teleop" "stages" 4}}
-      <b>Control Panel</b>
-      <div class="form-group">
-        <div class="row">
-          <div class="radio col-lg-3 col-lg-offset-1">
-            <input type="radio" name="{{"{{alliance}}"}}ControlPanelStatus" value="0">None
-          </div>
-          <div class="radio col-lg-4">
-            <input type="radio" name="{{"{{alliance}}"}}ControlPanelStatus" value="1">Rotation Control
-          </div>
-          <div class="radio col-lg-4">
-            <input type="radio" name="{{"{{alliance}}"}}ControlPanelStatus" value="2">Position Control
-          </div>
-        </div>
-      </div>
+      <b>Cargos</b>
+      {{template "cargos" dict "period" "Teleop"}}
     </fieldset>
     <fieldset>
       <legend>Endgame</legend>
@@ -67,21 +53,16 @@
         {{range $i := seq 3}}
           <div class="row">
             <label class="col-lg-2 col-lg-offset-1 control-label">Team {{"{{team"}}{{$i}}{{"}}"}}</label>
-            <div class="radio col-lg-2">
-              <input type="radio" name="{{"{{alliance}}"}}EndgameStatuses{{$i}}" value="0">None
-            </div>
-            <div class="radio col-lg-2">
-              <input type="radio" name="{{"{{alliance}}"}}EndgameStatuses{{$i}}" value="1">Park
-            </div>
-            <div class="radio col-lg-2">
-              <input type="radio" name="{{"{{alliance}}"}}EndgameStatuses{{$i}}" value="2">Hang
-            </div>
+            {{template "endgameLevel" dict "level" "None" "team" $i "index" 0}}
+            {{template "endgameLevel" dict "level" "Low Rung" "team" $i "index" 1}}
+          </div>
+          <div class="row">
+            <label class="col-lg-2 col-lg-offset-1 control-label"></label>
+            {{template "endgameLevel" dict "level" "Mid Rung" "team" $i "index" 2}}
+            {{template "endgameLevel" dict "level" "High Rung" "team" $i "index" 3}}
+            {{template "endgameLevel" dict "level" "Traversal Rung" "team" $i "index" 4}}
           </div>
         {{end}}
-        <div class="row">
-          <label class="col-lg-3 control-label">Rung Is Level</label>
-          <input type="checkbox" class="input-sm" name="{{"{{alliance}}"}}RungIsLevel">
-        </div>
       </div>
     </fieldset>
     <fieldset>
@@ -185,26 +166,22 @@
   renderResults("blue");
 </script>
 {{end}}
-{{define "powerCells"}}
+{{define "cargos"}}
   <div class="form-group">
-    <div class="row">
-      <label class="col-lg-2 col-lg-offset-3 text-center">Stage 1</label>
-      {{range $i := seq (add .stages -1)}}
-        <label class="col-lg-2 text-center">{{if lt $i 3}}Stage {{add $i 1}}{{else}}Extra{{end}}</label>
-      {{end}}
-    </div>
-    {{template "powerCellGoal" dict "period" .period "stages" .stages "goal" "Inner"}}
-    {{template "powerCellGoal" dict "period" .period "stages" .stages "goal" "Outer"}}
-    {{template "powerCellGoal" dict "period" .period "stages" .stages "goal" "Bottom"}}
+    {{template "cargoGoal" dict "period" .period "goal" "Upper"}}
+    {{template "cargoGoal" dict "period" .period "goal" "Lower"}}
   </div>
 {{end}}
-{{define "powerCellGoal"}}
+{{define "cargoGoal"}}
   <div class="row">
     <label class="col-lg-2 col-lg-offset-1">{{.goal}}</label>
-    {{range $i := seq .stages}}
       <div class="col-lg-2">
-        <input type="text" class="form-control input-sm" name="{{"{{alliance}}"}}{{$.period}}Cells{{$.goal}}{{$i}}">
+        <input type="text" class="form-control input-sm" name="{{"{{alliance}}"}}{{$.period}}Cargo{{$.goal}}">
       </div>
-    {{end}}
+  </div>
+{{end}}
+{{define "endgameLevel"}}
+  <div class="radio col-lg-2">
+    <input type="radio" name="{{"{{alliance}}"}}EndgameStatuses{{.team}}" value="{{.index}}">{{.level}}
   </div>
 {{end}}
