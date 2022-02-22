@@ -31,26 +31,20 @@ var renderResults = function(alliance) {
   $("#" + alliance + "Score").html(scoreContent);
 
   // Set the values of the form fields from the JSON results data.
-  for (var i = 0; i < 4; i++) {
+  for (var i = 0; i < 3; i++) {
     var i1 = i + 1;
 
-    if (i < 2) {
-      getInputElement(alliance, "AutoCellsBottom" + i1).val(result.score.AutoCellsBottom[i]);
-      getInputElement(alliance, "AutoCellsOuter" + i1).val(result.score.AutoCellsOuter[i]);
-      getInputElement(alliance, "AutoCellsInner" + i1).val(result.score.AutoCellsInner[i]);
+    if (i < 1) {
+      getInputElement(alliance, "AutoCargoUpper").val(result.score.AutoCargoUpper);
+      getInputElement(alliance, "AutoCargoLower").val(result.score.AutoCargoUpper);
+
+      getInputElement(alliance, "TeleopCargoUpper").val(result.score.TeleopCargoUpper);
+      getInputElement(alliance, "TeleopCargoLower").val(result.score.TeleopCargoLower);
     }
 
-    if (i < 3) {
-      getInputElement(alliance, "ExitedInitiationLine" + i1).prop("checked", result.score.ExitedInitiationLine[i]);
-      getInputElement(alliance, "EndgameStatuses" + i1, result.score.EndgameStatuses[i]).prop("checked", true);
-    }
-
-    getInputElement(alliance, "TeleopCellsBottom" + i1).val(result.score.TeleopCellsBottom[i]);
-    getInputElement(alliance, "TeleopCellsOuter" + i1).val(result.score.TeleopCellsOuter[i]);
-    getInputElement(alliance, "TeleopCellsInner" + i1).val(result.score.TeleopCellsInner[i]);
+    getInputElement(alliance, "ExitedTarmac" + i1).prop("checked", result.score.ExitedTarmac[i]);
+    getInputElement(alliance, "EndgameStatuses" + i1, result.score.EndgameStatuses[i]).prop("checked", true);
   }
-  getInputElement(alliance, "ControlPanelStatus", result.score.ControlPanelStatus).prop("checked", true);
-  getInputElement(alliance, "RungIsLevel").prop("checked", result.score.RungIsLevel);
 
   if (result.score.Fouls != null) {
     $.each(result.score.Fouls, function(k, v) {
@@ -75,34 +69,26 @@ var updateResults = function(alliance) {
     formData[v.name] = v.value;
   });
 
-  result.score.ExitedInitiationLine = [];
-  result.score.AutoCellsBottom = [];
-  result.score.AutoCellsOuter = [];
-  result.score.AutoCellsInner = [];
-  result.score.TeleopCellsBottom = [];
-  result.score.TeleopCellsOuter = [];
-  result.score.TeleopCellsInner = [];
+  result.score.ExitedTarmac = [];
+  result.score.AutoCargoUpper = 0;
+  result.score.AutoCargoLower = 0;
+  result.score.TeleopCargoUpper = 0;
+  result.score.TeleopCargoLower = 0;
   result.score.EndgameStatuses = [];
-  for (var i = 0; i < 4; i++) {
+  for (var i = 0; i < 3; i++) {
     var i1 = i + 1;
 
-    if (i < 2) {
-      result.score.AutoCellsBottom[i] = parseInt(formData[alliance + "AutoCellsBottom" + i1]);
-      result.score.AutoCellsOuter[i] = parseInt(formData[alliance + "AutoCellsOuter" + i1]);
-      result.score.AutoCellsInner[i] = parseInt(formData[alliance + "AutoCellsInner" + i1]);
+    if (i < 1) {
+      result.score.AutoCargoUpper = parseInt(formData[alliance + "AutoCargoUpper"]);
+      result.score.AutoCargoLower = parseInt(formData[alliance + "AutoCargoLower"]);
     }
 
-    if (i < 3) {
-      result.score.ExitedInitiationLine[i] = formData[alliance + "ExitedInitiationLine" + i1] === "on";
-      result.score.EndgameStatuses[i] = parseInt(formData[alliance + "EndgameStatuses" + i1]);
-    }
+    result.score.ExitedTarmac[i] = formData[alliance + "ExitedTarmac" + i1] === "on";
+    result.score.EndgameStatuses[i] = parseInt(formData[alliance + "EndgameStatuses" + i1]);
 
-    result.score.TeleopCellsBottom[i] = parseInt(formData[alliance + "TeleopCellsBottom" + i1]);
-    result.score.TeleopCellsOuter[i] = parseInt(formData[alliance + "TeleopCellsOuter" + i1]);
-    result.score.TeleopCellsInner[i] = parseInt(formData[alliance + "TeleopCellsInner" + i1]);
+      result.score.TeleopCargoUpper = parseInt(formData[alliance + "TeleopCargoUpper"]);
+      result.score.TeleopCargoLower = parseInt(formData[alliance + "TeleopCargoLower"]);
   }
-  result.score.ControlPanelStatus = parseInt(formData[alliance + "ControlPanelStatus"]);
-  result.score.RungIsLevel = formData[alliance + "RungIsLevel"] === "on";
 
   result.score.Fouls = [];
   for (var i = 0; formData[alliance + "Foul" + i + "Time"]; i++) {
