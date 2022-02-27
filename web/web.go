@@ -155,6 +155,7 @@ func (web *Web) newHandler() http.Handler {
 	router.HandleFunc("/match_play/websocket", web.matchPlayWebsocketHandler).Methods("GET")
 	router.HandleFunc("/match_play/e-stop/{alliance}/{driverStationIndex}", web.eStopHadnler).Methods("GET")
 	router.HandleFunc("/match_play/scoring/ball/{level}/{color}", web.ballCountHadnler).Methods("GET")
+	router.HandleFunc("/match_play/scoring/ball/error", web.ballCountErrorHadnler).Methods("POST")
 	router.HandleFunc("/match_review", web.matchReviewHandler).Methods("GET")
 	router.HandleFunc("/match_review/{matchId}/edit", web.matchReviewEditGetHandler).Methods("GET")
 	router.HandleFunc("/match_review/{matchId}/edit", web.matchReviewEditPostHandler).Methods("POST")

@@ -61,3 +61,23 @@ func (web *Web) ballCountHadnler(w http.ResponseWriter, r *http.Request) {
 
 	web.arena.RealtimeScoreNotifier.Notify()
 }
+
+func (web *Web) ballCountErrorHadnler(w http.ResponseWriter, r *http.Request) {
+	if !web.userIsAdmin(w, r) {
+		return
+	}
+
+	index := handleFormValue(r.PostFormValue("index"))
+	color := handleFormValue(r.PostFormValue("color"))
+	err := handleFormValue(r.PostFormValue("error"))
+
+	handleWebErr(w, fmt.Errorf("ball counter: index '%s', color '%s', error '%s'", index, color, err))
+}
+
+func handleFormValue(value string) string {
+	if value == "" {
+		return "?"
+	}
+
+	return value
+}
