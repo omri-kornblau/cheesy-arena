@@ -8,8 +8,9 @@ package web
 import (
 	"fmt"
 	"net/http"
+	"time"
 
-	"github.com/Team254/cheesy-arena/field"
+	"github.com/Team254/cheesy-arena/game"
 	"github.com/gorilla/mux"
 )
 
@@ -32,11 +33,6 @@ func (web *Web) ballCountHadnler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Don't read score from counter if not in match
-	if web.arena.MatchState == field.PostMatch || web.arena.MatchState == field.PreMatch {
-		return
-	}
-
 	// Default color is blue
 	realtimeScore := &web.arena.BlueRealtimeScore
 	if color == "red" {
@@ -45,13 +41,17 @@ func (web *Web) ballCountHadnler(w http.ResponseWriter, r *http.Request) {
 
 	score := &(*realtimeScore).CurrentScore
 
-	if web.arena.MatchState == field.AutoPeriod {
+	matchTimeSec := time.Since(web.arena.MatchStartTime).Seconds()
+	if matchTimeSec >= float64(game.MatchTiming.WarmupDurationSec) &&
+		matchTimeSec <= game.GetDurationToAutoCountingEnd().Seconds() {
+		// Auto
 		if level == "upper" {
 			score.AutoCargoUpper[0]++
 		} else {
 			score.AutoCargoLower[0]++
 		}
-	} else {
+	} else if matchTimeSec <= game.GetDurationToTeleopCountingEnd().Seconds() {
+		// Teleop
 		if level == "upper" {
 			score.TeleopCargoUpper[0]++
 		} else {
