@@ -14,8 +14,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// Shows the team list.
-func (web *Web) ballCountHadnler(w http.ResponseWriter, r *http.Request) {
+func (web *Web) ballCountHandler(w http.ResponseWriter, r *http.Request) {
 	if !web.userIsAdmin(w, r) {
 		return
 	}

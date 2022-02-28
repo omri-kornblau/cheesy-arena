@@ -14,7 +14,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// Shows the team list.
 func (web *Web) eStopHadnler(w http.ResponseWriter, r *http.Request) {
 	if !web.userIsAdmin(w, r) {
 		return
