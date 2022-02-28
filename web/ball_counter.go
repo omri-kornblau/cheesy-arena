@@ -27,7 +27,7 @@ func (web *Web) ballCountHadnler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	level := vars["level"]
-	if level != "high" && level != "low" {
+	if level != "lower" && level != "upper" {
 		handleWebErr(w, fmt.Errorf("ball counter: invalid level '%s'", level))
 		return
 	}
@@ -46,13 +46,13 @@ func (web *Web) ballCountHadnler(w http.ResponseWriter, r *http.Request) {
 	score := &(*realtimeScore).CurrentScore
 
 	if web.arena.MatchState == field.AutoPeriod {
-		if level == "high" {
+		if level == "upper" {
 			score.AutoCargoUpper[0]++
 		} else {
 			score.AutoCargoLower[0]++
 		}
 	} else {
-		if level == "high" {
+		if level == "upper" {
 			score.TeleopCargoUpper[0]++
 		} else {
 			score.TeleopCargoLower[0]++
