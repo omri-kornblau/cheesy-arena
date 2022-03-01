@@ -12,7 +12,7 @@ body {
 .terminal {
   max-width: 400px;
   min-height: 300px;
-  max-height: 60vh;
+  max-height: calc(100vh - 100px);
   overflow: auto;
   color: red;
 }
@@ -34,8 +34,7 @@ button {
 }
 
 .log {
-  font-style: italic;
-  font-size: 10px;
+  font-size: 12px;
   border-bottom: 5px;
 }
 
