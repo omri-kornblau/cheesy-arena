@@ -7,12 +7,11 @@ package web
 
 import (
 	"fmt"
-	"github.com/Team254/cheesy-arena/game"
-	"github.com/Team254/cheesy-arena/model"
-	"github.com/Team254/cheesy-arena/websocket"
 	"io"
 	"log"
 	"net/http"
+
+	"github.com/Team254/cheesy-arena/websocket"
 )
 
 // Shows the Monitor page.
@@ -26,15 +25,7 @@ func (web *Web) monitorHandler(w http.ResponseWriter, r *http.Request) {
 		handleWebErr(w, err)
 		return
 	}
-	plc := web.arena.Plc
-	data := struct {
-		*model.EventSettings
-		MatchSounds   []*game.MatchSound
-		InputNames    []string
-		RegisterNames []string
-		CoilNames     []string
-	}{web.arena.EventSettings, game.MatchSounds, plc.GetInputNames(), plc.GetRegisterNames(), plc.GetCoilNames()}
-	err = template.ExecuteTemplate(w, "base", data)
+	err = template.ExecuteTemplate(w, "base", nil)
 	if err != nil {
 		handleWebErr(w, err)
 		return
