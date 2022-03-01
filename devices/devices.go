@@ -72,8 +72,9 @@ func (s *DeviceStatus) Log(timeStamp time.Time, level LogLevel, msg string) {
 // DevicesMonitor handles monitoring and logging of devices on the field, it samples
 // the devices healthcheck and stores all log data
 type DevicesMonitor struct {
-	Devices     map[string]*DeviceStatus
-	devicesLock *sync.Mutex
+	Devices        map[string]*DeviceStatus
+	OrderedDevices []*DeviceStatus
+	devicesLock    *sync.Mutex
 
 	maxUnseenDeviceDuration time.Duration
 
@@ -96,14 +97,23 @@ func (c *DevicesMonitor) Init() {
 }
 
 func (c *DevicesMonitor) ListDevices() (out []*DeviceStatus) {
-	for _, deviceStatus := range c.Devices {
-		out = append(out, deviceStatus)
-	}
+	return c.OrderedDevices
+}
 
-	return out
+func (c *DevicesMonitor) CreateDevice(deviceName string) *DeviceStatus {
+	deviceStatus := NewDeviceStatus(deviceName)
+
+	c.OrderedDevices = append(c.OrderedDevices, deviceStatus)
+	c.Devices[deviceName] = deviceStatus
+
+	return deviceStatus
 }
 
 func (c *DevicesMonitor) SetDeviceSeen(deviceName string) {
+	if deviceName == "" {
+		return
+	}
+
 	now := time.Now()
 
 	c.devicesLock.Lock()
@@ -112,8 +122,7 @@ func (c *DevicesMonitor) SetDeviceSeen(deviceName string) {
 	// Create new device if not exists
 	deviceStatus, exists := c.Devices[deviceName]
 	if !exists {
-		deviceStatus = NewDeviceStatus(deviceName)
-		c.Devices[deviceName] = deviceStatus
+		deviceStatus = c.CreateDevice(deviceName)
 	}
 
 	// Update last seen
