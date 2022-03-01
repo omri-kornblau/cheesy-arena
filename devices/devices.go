@@ -3,6 +3,7 @@ package devices
 import (
 	"fmt"
 	"log"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -100,7 +101,20 @@ func (c *DevicesMonitor) ListDevices() (out []*DeviceStatus) {
 	return c.OrderedDevices
 }
 
+func (c *DevicesMonitor) CreateDevice(deviceName string) *DeviceStatus {
+	deviceStatus := NewDeviceStatus(deviceName)
+
+	c.OrderedDevices = append(c.OrderedDevices, deviceStatus)
+	c.Devices[deviceName] = deviceStatus
+
+	return deviceStatus
+}
+
 func (c *DevicesMonitor) SetDeviceSeen(deviceName string) {
+	if deviceName == "" {
+		return
+	}
+
 	now := time.Now()
 
 	c.devicesLock.Lock()
@@ -109,11 +123,7 @@ func (c *DevicesMonitor) SetDeviceSeen(deviceName string) {
 	// Create new device if not exists
 	deviceStatus, exists := c.Devices[deviceName]
 	if !exists {
-		// Create new device
-		deviceStatus = NewDeviceStatus(deviceName)
-
-		c.OrderedDevices = append(c.OrderedDevices, deviceStatus)
-		c.Devices[deviceName] = deviceStatus
+		deviceStatus = c.CreateDevice(deviceName)
 	}
 
 	// Update last seen
@@ -157,6 +167,9 @@ func (c *DevicesMonitor) SetDeviceError(deviceName, deviceErr string, extraData 
 	msg := fmt.Sprintf("Error: %s", deviceErr)
 
 	if len(extraData) > 0 {
+		// Sort for consistency
+		sort.Strings(extraData)
+
 		extraDataMsg := strings.Join(extraData, ", ")
 		msg = fmt.Sprintf("Error: %s (%s)", deviceErr, extraDataMsg)
 	}
