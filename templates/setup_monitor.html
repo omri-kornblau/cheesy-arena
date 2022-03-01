@@ -1,0 +1,64 @@
+{{/*
+  Copyright 2018 Team 254. All Rights Reserved.
+  Author: pat@patfairbank.com (Patrick Fairbank)
+
+  UI for testing the game sounds and the LEDs and PLC connected to the field.
+*/}}
+{{define "title"}}Monitor{{end}}
+{{define "body"}}
+  <div class="well">      
+    <legend>PLC</legend>
+      <div class="row">
+        <div class="col-lg-4">
+          <table class="table">
+            <tr>
+              <th colspan="2"><button id="raspberry-pi-button" onclick="handleClick('raspberrypi')">Raspberry Pi</button></th>
+            </tr>
+            <tr>
+              <td>
+                <div id="raspberry-pi" class="terminal">
+                  
+                </div>
+              </td>
+            </tr>
+          </table>
+        </div>
+        <div class="col-lg-4">
+          <table class="table">
+            <tr>
+              <th colspan="2"><button id="pc1-button" onclick="handleClick('pc1')">PC 1</button></th>
+            </tr>
+            <tr>
+              <td>
+                <div id="pc1" class="terminal">
+                </div>
+              </td>
+            </tr>
+          </table>
+        </div>
+        <div class="col-lg-4">
+          <table class="table">
+            <tr>
+              <th colspan="2"><button id="pc2-button" onclick="handleClick('pc2')">PC 2</button></th>
+            </tr>
+            <tr>
+              <td>
+                <div id="pc2" class="terminal">
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <button onclick="test()">test</button>
+              </td>
+              
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+{{end}}
+{{define "script"}}
+<script src="/static/js/setup_monitor.js"></script>
+<link rel="stylesheet" href="/static/css/setup_monitor.css" />
+{{end}}

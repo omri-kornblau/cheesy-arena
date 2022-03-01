@@ -1,0 +1,33 @@
+/*
+  Copyright 2019 Team 254. All Rights Reserved.
+  Author: pat@patfairbank.com (Patrick Fairbank)
+*/
+
+body {
+  border-color:rgba(0,0,0,0.15);
+  padding:24px;
+  border-radius:6px;
+}
+
+.terminal {
+  width: 300px;
+  height: 350px;
+  overflow: auto;
+  color: red;
+}
+
+button {
+  font-size: large;
+  color: white;
+}
+
+#raspberry-pi-button{
+  background-color: red;
+}
+
+#pc1-button{
+  background-color: red;
+}
+#pc2-button{
+  background-color: red;
+}
