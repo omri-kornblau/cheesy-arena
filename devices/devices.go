@@ -166,6 +166,8 @@ func (c *DevicesMonitor) SetDeviceError(deviceName, deviceErr string, extraData 
 	msg := fmt.Sprintf("Error: %s", deviceErr)
 
 	if len(extraData) > 0 {
+		sort.Strings(extraData)
+
 		extraDataMsg := strings.Join(extraData, ", ")
 		msg = fmt.Sprintf("Error: %s (%s)", deviceErr, extraDataMsg)
 	}
