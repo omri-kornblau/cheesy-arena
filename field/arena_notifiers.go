@@ -240,7 +240,7 @@ func (arena *Arena) generateScoringStatusMessage() interface{} {
 }
 
 func (arena *Arena) generateDevicesMonitoringMessage() interface{} {
-	return nil
+	return arena.DevicesMonitor.ListDevices()
 }
 
 // Constructs the data object for one alliance sent to the audience display for the realtime scoring overlay.

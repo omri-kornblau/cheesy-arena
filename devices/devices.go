@@ -24,7 +24,7 @@ const (
 
 // DeviceStatus holds all the data from a device to keep track of it's status
 type DeviceStatus struct {
-	Name string
+	Name string `json:"name"`
 
 	Logs     []*DeviceLog `json:"logs"`
 	LastSeen time.Time    `json:"lastSeen"`
@@ -44,6 +44,7 @@ const (
 func NewDeviceStatus(name string) *DeviceStatus {
 	return &DeviceStatus{
 		Name:     name,
+		Logs:     []*DeviceLog{},
 		State:    DeviceState_On,
 		logsLock: &sync.Mutex{},
 	}
@@ -92,6 +93,14 @@ func NewDevicesMonitor(statusChangeNotifier func()) *DevicesMonitor {
 func (c *DevicesMonitor) Init() {
 	const deviceSamplingInterval_Seconds = 1
 	c.StartDevicesSampler(deviceSamplingInterval_Seconds * time.Second)
+}
+
+func (c *DevicesMonitor) ListDevices() (out []*DeviceStatus) {
+	for _, deviceStatus := range c.Devices {
+		out = append(out, deviceStatus)
+	}
+
+	return out
 }
 
 func (c *DevicesMonitor) SetDeviceSeen(deviceName string) {
