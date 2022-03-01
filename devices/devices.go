@@ -2,6 +2,7 @@ package devices
 
 import (
 	"fmt"
+	"log"
 	"strings"
 	"sync"
 	"time"
@@ -110,6 +111,8 @@ func (c *DevicesMonitor) SetDeviceSeen(deviceName string) {
 	deviceStatus.LastSeen = now
 
 	if deviceStatus.State == DeviceState_Off {
+		log.Default().Printf("Field device [%s] reconnected \n", deviceStatus.Name)
+
 		deviceStatus.State = DeviceState_Error
 
 		deviceStatus.Log(
@@ -131,6 +134,8 @@ func (c *DevicesMonitor) SetDeviceError(deviceName, deviceErr string, extraData 
 	now := time.Now()
 
 	if deviceStatus.State == DeviceState_Off {
+		log.Default().Printf("Field device [%s] reconnected \n", deviceStatus.Name)
+
 		deviceStatus.Log(
 			now,
 			LogLevel_Info,
@@ -196,6 +201,8 @@ func (c *DevicesMonitor) StartDevicesSampler(interval time.Duration) {
 
 				if unseenDuration > c.maxUnseenDeviceDuration {
 					deviceStatus.State = DeviceState_Off
+
+					log.Default().Printf("Error: Lost connection to field device [%s]\n", deviceStatus.Name)
 
 					msg := fmt.Sprintf("Device is off, didn't receive health check for longer then [%s]", unseenDuration.String())
 
