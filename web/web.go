@@ -182,6 +182,8 @@ func (web *Web) newHandler() http.Handler {
 	router.HandleFunc("/setup/field_testing/websocket", web.fieldTestingWebsocketHandler).Methods("GET")
 	router.HandleFunc("/setup/lower_thirds", web.lowerThirdsGetHandler).Methods("GET")
 	router.HandleFunc("/setup/lower_thirds/websocket", web.lowerThirdsWebsocketHandler).Methods("GET")
+	router.HandleFunc("/setup/monitor", web.monitorHandler).Methods("GET")
+	router.HandleFunc("/setup/monitor/websocket", web.monitorWebsocketHandler).Methods("GET")
 	router.HandleFunc("/setup/schedule", web.scheduleGetHandler).Methods("GET")
 	router.HandleFunc("/setup/schedule/generate", web.scheduleGeneratePostHandler).Methods("POST")
 	router.HandleFunc("/setup/schedule/republish", web.scheduleRepublishPostHandler).Methods("POST")
@@ -199,6 +201,8 @@ func (web *Web) newHandler() http.Handler {
 	router.HandleFunc("/setup/teams/generate_wpa_keys", web.teamsGenerateWpaKeysHandler).Methods("GET")
 	router.HandleFunc("/setup/teams/publish", web.teamsPublishHandler).Methods("POST")
 	router.HandleFunc("/setup/teams/refresh", web.teamsRefreshHandler).Methods("GET")
+	router.HandleFunc("/monitoring/device/error", web.deviceErrorPostHandler).Methods("POST")
+	router.HandleFunc("/monitoring/device/healthcheck/{deviceName}", web.deviceHealthcheckHandler).Methods("GET")
 	return router
 }
 

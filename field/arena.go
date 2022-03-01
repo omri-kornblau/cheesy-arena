@@ -7,14 +7,16 @@ package field
 
 import (
 	"fmt"
+	"log"
+	"math/rand"
+	"time"
+
+	"github.com/Team254/cheesy-arena/devices"
 	"github.com/Team254/cheesy-arena/game"
 	"github.com/Team254/cheesy-arena/model"
 	"github.com/Team254/cheesy-arena/network"
 	"github.com/Team254/cheesy-arena/partner"
 	"github.com/Team254/cheesy-arena/plc"
-	"log"
-	"math/rand"
-	"time"
 )
 
 const (
@@ -78,6 +80,9 @@ type Arena struct {
 	MuteMatchSounds            bool
 	matchAborted               bool
 	soundsPlayed               map[*game.MatchSound]struct{}
+
+	// Orbit
+	DevicesMonitor *devices.DevicesMonitor
 }
 
 type AllianceStation struct {
@@ -127,6 +132,9 @@ func NewArena(dbPath string) (*Arena, error) {
 	arena.SavedMatch = &model.Match{}
 	arena.SavedMatchResult = model.NewMatchResult()
 	arena.AllianceStationDisplayMode = "match"
+
+	arena.DevicesMonitor = devices.NewDevicesMonitor(arena.DevicesMonitoringNotifier.Notify)
+	arena.DevicesMonitor.Init()
 
 	return arena, nil
 }

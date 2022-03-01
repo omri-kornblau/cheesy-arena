@@ -30,6 +30,7 @@ type ArenaNotifiers struct {
 	ReloadDisplaysNotifier             *websocket.Notifier
 	ScorePostedNotifier                *websocket.Notifier
 	ScoringStatusNotifier              *websocket.Notifier
+	DevicesMonitoringNotifier          *websocket.Notifier
 }
 
 type MatchTimeMessage struct {
@@ -62,6 +63,7 @@ func (arena *Arena) configureNotifiers() {
 	arena.ReloadDisplaysNotifier = websocket.NewNotifier("reload", nil)
 	arena.ScorePostedNotifier = websocket.NewNotifier("scorePosted", arena.generateScorePostedMessage)
 	arena.ScoringStatusNotifier = websocket.NewNotifier("scoringStatus", arena.generateScoringStatusMessage)
+	arena.DevicesMonitoringNotifier = websocket.NewNotifier("devicesMonitoring", arena.generateDevicesMonitoringMessage)
 }
 
 func (arena *Arena) generateAllianceSelectionMessage() interface{} {
@@ -233,7 +235,12 @@ func (arena *Arena) generateScoringStatusMessage() interface{} {
 	}{arena.RedRealtimeScore.FoulsCommitted && arena.BlueRealtimeScore.FoulsCommitted,
 		arena.alliancePostMatchScoreReady("red"), arena.alliancePostMatchScoreReady("blue"),
 		arena.ScoringPanelRegistry.GetNumPanels("red"), arena.ScoringPanelRegistry.GetNumScoreCommitted("red"),
-		arena.ScoringPanelRegistry.GetNumPanels("blue"), arena.ScoringPanelRegistry.GetNumScoreCommitted("blue")}
+		arena.ScoringPanelRegistry.GetNumPanels("blue"), arena.ScoringPanelRegistry.GetNumScoreCommitted("blue"),
+	}
+}
+
+func (arena *Arena) generateDevicesMonitoringMessage() interface{} {
+	return arena.DevicesMonitor.ListDevices()
 }
 
 // Constructs the data object for one alliance sent to the audience display for the realtime scoring overlay.

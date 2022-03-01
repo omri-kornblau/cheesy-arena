@@ -1,0 +1,47 @@
+/*
+  Copyright 2019 Team 254. All Rights Reserved.
+  Author: pat@patfairbank.com (Patrick Fairbank)
+*/
+
+body {
+  border-color:rgba(0,0,0,0.15);
+  padding:24px;
+  border-radius:6px;
+}
+
+.terminal {
+  max-width: 400px;
+  min-height: 300px;
+  max-height: calc(100vh - 100px);
+  overflow: auto;
+  color: red;
+}
+
+button {
+  font-size: large;
+  color: white;
+}
+
+.button-off{
+  background-color: red;
+}
+
+.button-error{
+  background-color: rgb(255, 166, 0);
+}
+.button-on{
+  background-color: green;
+}
+
+.log {
+  font-size: 12px;
+  border-bottom: 5px;
+}
+
+.log-error {
+  color: red;
+}
+
+.log-info {
+  color: green;
+}
