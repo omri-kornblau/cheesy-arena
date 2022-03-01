@@ -7,14 +7,16 @@ package field
 
 import (
 	"fmt"
+	"log"
+	"math/rand"
+	"time"
+
+	"github.com/Team254/cheesy-arena/devices"
 	"github.com/Team254/cheesy-arena/game"
 	"github.com/Team254/cheesy-arena/model"
 	"github.com/Team254/cheesy-arena/network"
 	"github.com/Team254/cheesy-arena/partner"
 	"github.com/Team254/cheesy-arena/plc"
-	"log"
-	"math/rand"
-	"time"
 )
 
 const (
