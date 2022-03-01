@@ -1,7 +1,7 @@
 // Copyright 2018 Team 254. All Rights Reserved.
 // Author: pat@patfairbank.com (Patrick Fairbank)
 //
-// Client-side logic for the Field Testing page.
+// Client-side logic for the Device Monitoring page.
 
 var websocket;
 
