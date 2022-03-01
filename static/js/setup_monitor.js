@@ -4,7 +4,7 @@
 // Client-side logic for the Field Testing page.
 
 var websocket;
-let raspberryPiLogs = [];
+let raspberryPiLogs = new Array();
 let pc1Logs = [];
 let pc2Logs = [];
 
