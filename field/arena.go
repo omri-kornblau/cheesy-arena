@@ -78,6 +78,9 @@ type Arena struct {
 	MuteMatchSounds            bool
 	matchAborted               bool
 	soundsPlayed               map[*game.MatchSound]struct{}
+
+	// Orbit
+	DevicesMonitor *devices.DevicesMonitor
 }
 
 type AllianceStation struct {
@@ -127,6 +130,9 @@ func NewArena(dbPath string) (*Arena, error) {
 	arena.SavedMatch = &model.Match{}
 	arena.SavedMatchResult = model.NewMatchResult()
 	arena.AllianceStationDisplayMode = "match"
+
+	arena.DevicesMonitor = devices.NewDevicesMonitor(arena.DevicesMonitoringNotifier.Notify)
+	arena.DevicesMonitor.Init()
 
 	return arena, nil
 }

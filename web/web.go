@@ -188,6 +188,8 @@ func (web *Web) newHandler() http.Handler {
 	router.HandleFunc("/setup/teams/generate_wpa_keys", web.teamsGenerateWpaKeysHandler).Methods("GET")
 	router.HandleFunc("/setup/teams/publish", web.teamsPublishHandler).Methods("POST")
 	router.HandleFunc("/setup/teams/refresh", web.teamsRefreshHandler).Methods("GET")
+	router.HandleFunc("/monitoring/device/error", web.deviceErrorPostHandler).Methods("POST")
+	router.HandleFunc("/monitoring/device/healthcheck/{deviceName}", web.deviceHealthcheckHandler).Methods("GET")
 	return router
 }
 
