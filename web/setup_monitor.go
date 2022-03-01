@@ -55,7 +55,7 @@ func (web *Web) monitorWebsocketHandler(w http.ResponseWriter, r *http.Request) 
 	defer ws.Close()
 
 	// Subscribe the websocket to the notifiers whose messages will be passed on to the client, in a separate goroutine.
-	go ws.HandleNotifiers(web.arena.Plc.IoChangeNotifier)
+	go ws.HandleNotifiers(web.arena.DevicesMonitoringNotifier)
 
 	// Loop, waiting for commands and responding to them, until the client closes the connection.
 	for {
@@ -70,13 +70,14 @@ func (web *Web) monitorWebsocketHandler(w http.ResponseWriter, r *http.Request) 
 		}
 
 		switch messageType {
-		case "playSound":
-			sound, ok := data.(string)
+		case "reseterror":
+			deviceName, ok := data.(string)
 			if !ok {
 				ws.WriteError(fmt.Sprintf("Failed to parse '%s' message.", messageType))
 				continue
 			}
-			web.arena.PlaySoundNotifier.NotifyWithMessage(sound)
+
+			web.arena.DevicesMonitor.ResetDeviceError(deviceName)
 		default:
 			ws.WriteError(fmt.Sprintf("Invalid message type '%s'.", messageType))
 			continue
