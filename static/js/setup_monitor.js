@@ -4,69 +4,47 @@
 // Client-side logic for the Field Testing page.
 
 var websocket;
-let raspberryPiLogs = new Array();
-let pc1Logs = [];
-let pc2Logs = [];
 
-const terminals = new Map();
-terminals.set("raspberypi", raspberryPiLogs);
-terminals.set("pc1", pc1Logs);
-terminals.set("pc2", pc2Logs);
 
 const colors = new Map();
-colors.set("on", "green");
-colors.set("error", "orange");
-colors.set("off", "red");
+colors.set("on", "success");
+colors.set("error", "danger");
+colors.set("off", "primary");
 
 // Handles a websocket message to update logs.
-var handleLogs = function(data) {
-  var name = data.deviceName;
-  var state = data.state;
-  var color = colors.get(state);
-  var logs = data.logs;
-
-  logs.forEach(log => {
-    terminals.get(name).push(log + "\n");
-  });
-  $("#" + name + "-button").css("background-color", color);
-  $("#" + name).text(terminals.get(name));
+var handleLogs = function (data) {
+  var columns = data.map(createDeviceColumnHTML).join("");
+  $("#monitor").html(columns);
 };
 
-$(function() {
+$(function () {
   // Set up the websocket back to the server.
   websocket = new CheesyWebsocket("/setup/monitor/websocket", {
-    logs: function(event) { handleLogs(event.data); }
+    devicesMonitoring: function (event) { handleLogs(event.data); }
   });
 });
 
 // Handles an element click and sends the appropriate websocket message.
 function handleClick(name) {
-  // websocket.send(name + "-reset");
-  $("#" + name + "-button").css("background-color", "green");
-  $("#" + name).text("recovered");
-  clear(name);
+  websocket.send("reseterror", name);
 };
 
-function clear(name){
-  if(name === "raspberrypi"){
-    raspberryPiLogs = [];
-    return;
-  }
-  if(name === "pc1"){
-    pc1Logs = [];
-    return;
-  }
-  if(name === "pc2"){
-    pc2Logs = [];
-    return;
-  }
-}
 
-function test() {
-  var data = {
-    "deviceName": "pc1",
-    "state": "error",
-    "logs": ["1","2","3"],
-  }
-  handleLogs(data);
+const createDeviceColumnHTML = (data) => {
+  return `<div class="col-xs-4">
+  <table class="table">
+    <tr>
+      <th colspan="2"><b class="btn btn-${colors.get(data.state)} button-${data.state}" onclick="handleClick('${data.name}')">${data.name}</b></th>
+    </tr>
+    <tr>
+      <td>
+        <div id="${data.name}" class="terminal">
+          ${data.logs.reverse().map((value) => {
+                return `<p class="log log-${value.level}">[${moment(value.timestamp).format("YYYY-MM-DD HH:mm:ss")}] ${value.message}</p>`;
+          }).join("")}
+        </div>
+      </td>
+    </tr>
+  </table>
+</div>`;
 }
