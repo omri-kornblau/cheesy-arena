@@ -4,11 +4,12 @@
 package field
 
 import (
+	"testing"
+	"time"
+
 	"github.com/Team254/cheesy-arena/game"
 	"github.com/Team254/cheesy-arena/model"
 	"github.com/stretchr/testify/assert"
-	"testing"
-	"time"
 )
 
 func TestAssignTeam(t *testing.T) {
@@ -497,8 +498,8 @@ func TestAstop(t *testing.T) {
 	assert.Equal(t, AutoPeriod, arena.MatchState)
 	assert.Equal(t, true, arena.AllianceStations["R1"].DsConn.Enabled)
 
-	arena.handleEstop("R1", true)
-	arena.handleEstop("R2", false)
+	arena.HandleEstop("R1", true)
+	arena.HandleEstop("R2", false)
 	assert.Equal(t, true, arena.AllianceStations["R1"].Astop)
 	assert.Equal(t, false, arena.AllianceStations["R1"].Estop)
 	assert.Equal(t, false, arena.AllianceStations["R2"].Astop)
@@ -508,8 +509,8 @@ func TestAstop(t *testing.T) {
 	assert.Equal(t, false, arena.AllianceStations["R1"].DsConn.Enabled)
 	assert.Equal(t, true, arena.AllianceStations["R2"].DsConn.Enabled)
 
-	arena.handleEstop("R1", true)
-	arena.handleEstop("R2", true)
+	arena.HandleEstop("R1", true)
+	arena.HandleEstop("R2", true)
 	assert.Equal(t, true, arena.AllianceStations["R1"].Astop)
 	assert.Equal(t, false, arena.AllianceStations["R1"].Estop)
 	assert.Equal(t, true, arena.AllianceStations["R2"].Astop)
@@ -519,8 +520,8 @@ func TestAstop(t *testing.T) {
 	assert.Equal(t, false, arena.AllianceStations["R1"].DsConn.Enabled)
 	assert.Equal(t, false, arena.AllianceStations["R2"].DsConn.Enabled)
 
-	arena.handleEstop("R1", false)
-	arena.handleEstop("R2", true)
+	arena.HandleEstop("R1", false)
+	arena.HandleEstop("R2", true)
 	assert.Equal(t, true, arena.AllianceStations["R1"].Astop)
 	assert.Equal(t, false, arena.AllianceStations["R1"].Estop)
 	assert.Equal(t, true, arena.AllianceStations["R2"].Astop)
@@ -536,8 +537,8 @@ func TestAstop(t *testing.T) {
 	assert.Equal(t, PausePeriod, arena.MatchState)
 	arena.MatchStartTime = time.Now().Add(-time.Duration(game.MatchTiming.WarmupDurationSec+
 		game.MatchTiming.AutoDurationSec+game.MatchTiming.PauseDurationSec) * time.Second)
-	arena.handleEstop("R1", false)
-	arena.handleEstop("R2", true)
+	arena.HandleEstop("R1", false)
+	arena.HandleEstop("R2", true)
 	assert.Equal(t, false, arena.AllianceStations["R1"].Astop)
 	assert.Equal(t, false, arena.AllianceStations["R1"].Estop)
 	assert.Equal(t, false, arena.AllianceStations["R2"].Astop)
@@ -548,8 +549,8 @@ func TestAstop(t *testing.T) {
 	assert.Equal(t, true, arena.AllianceStations["R1"].DsConn.Enabled)
 	assert.Equal(t, false, arena.AllianceStations["R2"].DsConn.Enabled)
 
-	arena.handleEstop("R1", true)
-	arena.handleEstop("R2", false)
+	arena.HandleEstop("R1", true)
+	arena.HandleEstop("R2", false)
 	assert.Equal(t, false, arena.AllianceStations["R1"].Astop)
 	assert.Equal(t, true, arena.AllianceStations["R1"].Estop)
 	assert.Equal(t, false, arena.AllianceStations["R2"].Astop)

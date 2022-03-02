@@ -731,12 +731,12 @@ func (arena *Arena) handlePlcInput() {
 		arena.AbortMatch()
 	}
 	redEstops, blueEstops := arena.Plc.GetTeamEstops()
-	arena.handleEstop("R1", redEstops[0])
-	arena.handleEstop("R2", redEstops[1])
-	arena.handleEstop("R3", redEstops[2])
-	arena.handleEstop("B1", blueEstops[0])
-	arena.handleEstop("B2", blueEstops[1])
-	arena.handleEstop("B3", blueEstops[2])
+	arena.HandleEstop("R1", redEstops[0])
+	arena.HandleEstop("R2", redEstops[1])
+	arena.HandleEstop("R3", redEstops[2])
+	arena.HandleEstop("B1", blueEstops[0])
+	arena.HandleEstop("B2", blueEstops[1])
+	arena.HandleEstop("B3", blueEstops[2])
 	redEthernets, blueEthernets := arena.Plc.GetEthernetConnected()
 	arena.AllianceStations["R1"].Ethernet = redEthernets[0]
 	arena.AllianceStations["R2"].Ethernet = redEthernets[1]
@@ -826,7 +826,7 @@ func (arena *Arena) handlePlcOutput() {
 	}
 }
 
-func (arena *Arena) handleEstop(station string, state bool) {
+func (arena *Arena) HandleEstop(station string, state bool) {
 	allianceStation := arena.AllianceStations[station]
 	if state {
 		if arena.MatchState == AutoPeriod {
