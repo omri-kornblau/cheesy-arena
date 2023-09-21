@@ -7,14 +7,15 @@ package field
 
 import (
 	"fmt"
-	"github.com/Team254/cheesy-arena/game"
-	"github.com/Team254/cheesy-arena/model"
-	"github.com/Team254/cheesy-arena/network"
 	"log"
 	"net"
 	"regexp"
 	"strconv"
 	"time"
+
+	"github.com/Team254/cheesy-arena/game"
+	"github.com/Team254/cheesy-arena/model"
+	"github.com/Team254/cheesy-arena/network"
 )
 
 // FMS uses 1121 for sending UDP packets, and FMS Lite uses 1120. Using 1121
@@ -48,6 +49,11 @@ type DriverStationConnection struct {
 	tcpConn                   net.Conn
 	udpConn                   net.Conn
 	log                       *TeamMatchLog
+
+	// WrongStation indicates if the team in the station is the incorrect team
+	// by being non-empty. If the team is in the correct station, or no team is
+	// connected, this is empty.
+	WrongStation string
 }
 
 var allianceStationPositionMap = map[string]byte{"R1": 0, "R2": 1, "R3": 2, "B1": 3, "B2": 4, "B3": 5}
@@ -176,30 +182,20 @@ func (dsConn *DriverStationConnection) encodeControlPacket(arena *Arena) [22]byt
 
 	// Match type.
 	match := arena.CurrentMatch
-	if match.Type == "practice" {
+	switch match.Type {
+	case model.Practice:
 		packet[6] = 1
-	} else if match.Type == "qualification" {
+	case model.Qualification:
 		packet[6] = 2
-	} else if match.Type == "elimination" {
+	case model.Playoff:
 		packet[6] = 3
-	} else {
+	default:
 		packet[6] = 0
 	}
 
 	// Match number.
-	if match.Type == "practice" || match.Type == "qualification" {
-		matchNumber, _ := strconv.Atoi(match.DisplayName)
-		packet[7] = byte(matchNumber >> 8)
-		packet[8] = byte(matchNumber & 0xff)
-	} else if match.Type == "elimination" {
-		// E.g. Quarter-final 3, match 1 will be numbered 431.
-		matchNumber := match.ElimRound*100 + match.ElimGroup*10 + match.ElimInstance
-		packet[7] = byte(matchNumber >> 8)
-		packet[8] = byte(matchNumber & 0xff)
-	} else {
-		packet[7] = 0
-		packet[8] = 1
-	}
+	packet[7] = byte(match.TypeOrder >> 8)
+	packet[8] = byte(match.TypeOrder & 0xff)
 	packet[9] = 1 // Match repeat number
 
 	// Current time.
@@ -218,15 +214,9 @@ func (dsConn *DriverStationConnection) encodeControlPacket(arena *Arena) [22]byt
 	// Remaining number of seconds in match.
 	var matchSecondsRemaining int
 	switch arena.MatchState {
-	case PreMatch:
-		fallthrough
-	case TimeoutActive:
-		fallthrough
-	case PostTimeout:
+	case PreMatch, TimeoutActive, PostTimeout:
 		matchSecondsRemaining = game.MatchTiming.AutoDurationSec
-	case StartMatch:
-		fallthrough
-	case AutoPeriod:
+	case StartMatch, AutoPeriod:
 		matchSecondsRemaining = game.MatchTiming.AutoDurationSec - int(arena.MatchTimeSec())
 	case PausePeriod:
 		matchSecondsRemaining = game.MatchTiming.TeleopDurationSec
@@ -265,6 +255,7 @@ func (dsConn *DriverStationConnection) decodeStatusPacket(data [36]byte) {
 
 	// Number of missed packets sent from the DS to the robot.
 	dsConn.MissedPacketCount = int(data[2]) - dsConn.missedPacketOffset
+
 }
 
 // Listens for TCP connection requests to Cheesy Arena from driver stations.
@@ -319,8 +310,9 @@ func (arena *Arena) listenForDriverStations() {
 		teamDigit1, _ := strconv.Atoi(teamDigits[1])
 		teamDigit2, _ := strconv.Atoi(teamDigits[2])
 		stationTeamId := teamDigit1*100 + teamDigit2
+		wrongAssignedStation := ""
 		if stationTeamId != teamId {
-			wrongAssignedStation := arena.getAssignedAllianceStation(stationTeamId)
+			wrongAssignedStation = arena.getAssignedAllianceStation(stationTeamId)
 			if wrongAssignedStation != "" {
 				// The team is supposed to be in this match, but is plugged into the wrong station.
 				log.Printf("Team %d is in incorrect station %s.", teamId, wrongAssignedStation)
@@ -349,6 +341,10 @@ func (arena *Arena) listenForDriverStations() {
 			continue
 		}
 		arena.AllianceStations[assignedStation].DsConn = dsConn
+
+		if wrongAssignedStation != "" {
+			dsConn.WrongStation = wrongAssignedStation
+		}
 
 		// Spin up a goroutine to handle further TCP communication with this driver station.
 		go dsConn.handleTcpConnection(arena)

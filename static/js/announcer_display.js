@@ -4,16 +4,7 @@
 // Client-side logic for the announcer display.
 
 var websocket;
-var teamTemplate = Handlebars.compile($("#teamTemplate").html());
-var matchResultTemplate = Handlebars.compile($("#matchResultTemplate").html());
-Handlebars.registerHelper("eachMapEntry", function(context, options) {
-  var ret = "";
-  $.each(context, function(key, value) {
-    var entry = {"key": key, "value": value};
-    ret = ret + options.fn(entry);
-  });
-  return ret;
-});
+let isFirstScorePosted = true;
 
 // Handles a websocket message to hide the score dialog once the next match is being introduced.
 var handleAudienceDisplayMode = function(targetScreen) {
@@ -25,13 +16,14 @@ var handleAudienceDisplayMode = function(targetScreen) {
 
 // Handles a websocket message to update the teams for the current match.
 var handleMatchLoad = function(data) {
-  $("#matchName").text(data.MatchType + " Match " + data.Match.DisplayName);
-  $("#red1").html(teamTemplate(formatTeam(data.Teams["R1"])));
-  $("#red2").html(teamTemplate(formatTeam(data.Teams["R2"])));
-  $("#red3").html(teamTemplate(formatTeam(data.Teams["R3"])));
-  $("#blue1").html(teamTemplate(formatTeam(data.Teams["B1"])));
-  $("#blue2").html(teamTemplate(formatTeam(data.Teams["B2"])));
-  $("#blue3").html(teamTemplate(formatTeam(data.Teams["B3"])));
+  $("#matchName").text(data.Match.LongName);
+
+  const teams = $("#teams");
+  teams.empty();
+
+  fetch("/displays/announcer/match_load")
+    .then(response => response.text())
+    .then(html => teams.html(html));
 };
 
 // Handles a websocket message to update the match time countdown.
@@ -50,58 +42,20 @@ var handleRealtimeScore = function(data) {
 
 // Handles a websocket message to populate the final score data.
 var handleScorePosted = function(data) {
-  $.each(data.RedFouls, function(i, foul) {
-    Object.assign(foul, data.RulesViolated[foul.RuleId]);
-  });
-  $.each(data.BlueFouls, function(i, foul) {
-    Object.assign(foul, data.RulesViolated[foul.RuleId]);
-  });
+  if (isFirstScorePosted) {
+    // Don't show the final score dialog when the page is first loaded.
+    isFirstScorePosted = false;
+    return;
+  }
 
-  var redRankings = {};
-  redRankings[data.Match.Red1] = getRankingText(data.Match.Red1, data.Rankings);
-  redRankings[data.Match.Red2] = getRankingText(data.Match.Red2, data.Rankings);
-  redRankings[data.Match.Red3] = getRankingText(data.Match.Red3, data.Rankings);
-  var blueRankings = {};
-  blueRankings[data.Match.Blue1] = getRankingText(data.Match.Blue1, data.Rankings);
-  blueRankings[data.Match.Blue2] = getRankingText(data.Match.Blue2, data.Rankings);
-  blueRankings[data.Match.Blue3] = getRankingText(data.Match.Blue3, data.Rankings);
-
-  $("#scoreMatchName").text(data.MatchType + " Match " + data.Match.DisplayName);
-  $("#redScoreDetails").html(matchResultTemplate({score: data.RedScoreSummary, fouls: data.RedFouls,
-      rulesViolated: data.RulesViolated, cards: data.RedCards, rankings: redRankings}));
-  $("#blueScoreDetails").html(matchResultTemplate({score: data.BlueScoreSummary, fouls: data.BlueFouls,
-    rulesViolated: data.RulesViolated, cards: data.BlueCards, rankings: blueRankings}));
-  $("#matchResult").modal("show");
+  const matchResult = $("#matchResult");
+  fetch("/displays/announcer/score_posted")
+    .then(response => response.text())
+    .then(html => matchResult.html(html));
+  matchResult.modal("show");
 
   // Activate tooltips above the foul listings.
   $("[data-toggle=tooltip]").tooltip({"placement": "top"});
-};
-
-// Replaces newlines in team fields with HTML line breaks.
-var formatTeam = function(team) {
-  if (team) {
-    team.Accomplishments = team.Accomplishments.replace(/[\r\n]+/g, "<br />");
-  }
-  return team;
-};
-
-// Returns the string to be displayed to indicate change in rank.
-var getRankingText = function(teamId, rankings) {
-  var ranking = rankings[teamId];
-  if (ranking === undefined || ranking.Rank === 0) {
-    return "";
-  }
-  var arrow = "";
-  if (ranking.Rank > ranking.PreviousRank && ranking.PreviousRank > 0) {
-    arrow = "&#11015;";
-  } else if (ranking.Rank < ranking.PreviousRank) {
-    arrow = "&#11014;";
-  }
-  var previousRank = "";
-  if (ranking.PreviousRank > 0) {
-    previousRank = " (was " + ranking.PreviousRank + ")";
-  }
-  return ranking.Rank + arrow + previousRank;
 };
 
 $(function() {

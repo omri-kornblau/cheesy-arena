@@ -7,17 +7,15 @@ package web
 
 import (
 	"fmt"
-	"io"
-	"log"
-	"net/http"
-	"strconv"
-	"strings"
-
 	"github.com/Team254/cheesy-arena/field"
 	"github.com/Team254/cheesy-arena/game"
 	"github.com/Team254/cheesy-arena/model"
 	"github.com/Team254/cheesy-arena/websocket"
 	"github.com/gorilla/mux"
+	"github.com/mitchellh/mapstructure"
+	"io"
+	"log"
+	"net/http"
 )
 
 // Renders the scoring interface which enables input of scores in real-time.
@@ -40,9 +38,10 @@ func (web *Web) scoringPanelHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	data := struct {
 		*model.EventSettings
-		PlcIsEnabled bool
-		Alliance     string
-	}{web.arena.EventSettings, web.arena.Plc.IsEnabled(), alliance}
+		PlcIsEnabled        bool
+		Alliance            string
+		ValidGridNodeStates map[game.Row]map[int]map[game.NodeState]string
+	}{web.arena.EventSettings, web.arena.Plc.IsEnabled(), alliance, game.ValidGridNodeStates()}
 	err = template.ExecuteTemplate(w, "base_no_navbar", data)
 	if err != nil {
 		handleWebErr(w, err)
@@ -87,7 +86,7 @@ func (web *Web) scoringPanelWebsocketHandler(w http.ResponseWriter, r *http.Requ
 
 	// Loop, waiting for commands and responding to them, until the client closes the connection.
 	for {
-		command, _, err := ws.Read()
+		command, data, err := ws.Read()
 		if err != nil {
 			if err == io.EOF {
 				// Client has closed the connection; nothing to do here.
@@ -96,7 +95,6 @@ func (web *Web) scoringPanelWebsocketHandler(w http.ResponseWriter, r *http.Requ
 			log.Println(err)
 			return
 		}
-
 		score := &(*realtimeScore).CurrentScore
 		scoreChanged := false
 
@@ -108,165 +106,71 @@ func (web *Web) scoringPanelWebsocketHandler(w http.ResponseWriter, r *http.Requ
 			}
 			web.arena.ScoringPanelRegistry.SetScoreCommitted(alliance, ws)
 			web.arena.ScoringStatusNotifier.Notify()
-		} else if number, err := strconv.Atoi(command); err == nil && number >= 1 && number <= 6 {
-			// Handle per-robot scoring fields.
-			if number <= 3 {
-				index := number - 1
-				score.ExitedInitiationLine[index] = !score.ExitedInitiationLine[index]
-				scoreChanged = true
-			} else {
-				index := number - 4
-				score.EndgameStatuses[index]++
-				if score.EndgameStatuses[index] == 3 {
-					score.EndgameStatuses[index] = 0
-				}
-				scoreChanged = true
-			}
 		} else {
-			switch strings.ToUpper(command) {
-			case "CI":
-				// Don't read score from counter if not in match
-				if web.arena.MatchState != field.PostMatch && web.arena.MatchState != field.PreMatch {
-					if web.arena.MatchState == field.AutoPeriod || web.arena.MatchState == field.PausePeriod {
-						if incrementGoal(score.AutoCellsInner[:],
-							score.CellCountingStage(web.arena.MatchState >= field.TeleopPeriod)) {
-							scoreChanged = true
-						}
-					}
-					if web.arena.MatchState == field.TeleopPeriod {
-						if incrementGoal(score.TeleopCellsInner[:],
-							score.CellCountingStage(web.arena.MatchState >= field.TeleopPeriod)) {
-							scoreChanged = true
-						}
-					}
-				}
+			args := struct {
+				TeamPosition int
+				GridRow      int
+				GridNode     int
+				NodeState    game.NodeState
+			}{}
+			err = mapstructure.Decode(data, &args)
+			if err != nil {
+				ws.WriteError(err.Error())
+				continue
+			}
 
-			case "CO":
-				// Don't read score from counter if not in match
-				if web.arena.MatchState != field.PostMatch && web.arena.MatchState != field.PreMatch {
-					if web.arena.MatchState == field.AutoPeriod || web.arena.MatchState == field.PausePeriod {
-						if incrementGoal(score.AutoCellsOuter[:],
-							score.CellCountingStage(web.arena.MatchState >= field.TeleopPeriod)) {
-							scoreChanged = true
-						}
-					}
-					if web.arena.MatchState == field.TeleopPeriod {
-						if incrementGoal(score.TeleopCellsOuter[:],
-							score.CellCountingStage(web.arena.MatchState >= field.TeleopPeriod)) {
-							scoreChanged = true
-						}
-					}
+			switch command {
+			case "mobilityStatus":
+				if args.TeamPosition >= 1 && args.TeamPosition <= 3 {
+					score.MobilityStatuses[args.TeamPosition-1] = !score.MobilityStatuses[args.TeamPosition-1]
+					scoreChanged = true
 				}
+			case "autoDockStatus":
+				if args.TeamPosition >= 1 && args.TeamPosition <= 3 {
+					score.AutoDockStatuses[args.TeamPosition-1] = !score.AutoDockStatuses[args.TeamPosition-1]
+					scoreChanged = true
+				}
+			case "endgameStatus":
+				if args.TeamPosition >= 1 && args.TeamPosition <= 3 {
+					score.EndgameStatuses[args.TeamPosition-1]++
+					if score.EndgameStatuses[args.TeamPosition-1] > 2 {
+						score.EndgameStatuses[args.TeamPosition-1] = 0
+					}
+					scoreChanged = true
+				}
+			case "autoChargeStationLevel":
+				score.AutoChargeStationLevel = !score.AutoChargeStationLevel
+				scoreChanged = true
+			case "endgameChargeStationLevel":
+				score.EndgameChargeStationLevel = !score.EndgameChargeStationLevel
+				scoreChanged = true
+			case "gridAutoScoring":
+				if args.GridRow >= 0 && args.GridRow <= 2 && args.GridNode >= 0 && args.GridNode <= 8 {
+					score.Grid.AutoScoring[args.GridRow][args.GridNode] =
+						!score.Grid.AutoScoring[args.GridRow][args.GridNode]
+					scoreChanged = true
+				}
+			case "gridNode":
+				if args.GridRow >= 0 && args.GridRow <= 2 && args.GridNode >= 0 && args.GridNode <= 8 {
+					currentState := score.Grid.Nodes[args.GridRow][args.GridNode]
+					if currentState == args.NodeState {
+						score.Grid.Nodes[args.GridRow][args.GridNode] = game.Empty
+						if web.arena.MatchState == field.AutoPeriod || web.arena.MatchState == field.PausePeriod {
+							score.Grid.AutoScoring[args.GridRow][args.GridNode] = false
+						}
+					} else {
+						score.Grid.Nodes[args.GridRow][args.GridNode] = args.NodeState
+						if web.arena.MatchState == field.AutoPeriod || web.arena.MatchState == field.PausePeriod {
+							score.Grid.AutoScoring[args.GridRow][args.GridNode] = true
+						}
+					}
+					scoreChanged = true
+				}
+			}
 
-			case "Q":
-				if decrementGoal(score.AutoCellsInner[:],
-					score.CellCountingStage(web.arena.MatchState >= field.TeleopPeriod)) {
-					scoreChanged = true
-				}
-			case "A":
-				if decrementGoal(score.AutoCellsOuter[:],
-					score.CellCountingStage(web.arena.MatchState >= field.TeleopPeriod)) {
-					scoreChanged = true
-				}
-			case "Z":
-				if decrementGoal(score.AutoCellsBottom[:],
-					score.CellCountingStage(web.arena.MatchState >= field.TeleopPeriod)) {
-					scoreChanged = true
-				}
-			case "W":
-				if incrementGoal(score.AutoCellsInner[:],
-					score.CellCountingStage(web.arena.MatchState >= field.TeleopPeriod)) {
-					scoreChanged = true
-				}
-			case "S":
-				if incrementGoal(score.AutoCellsOuter[:],
-					score.CellCountingStage(web.arena.MatchState >= field.TeleopPeriod)) {
-					scoreChanged = true
-				}
-			case "X":
-				if incrementGoal(score.AutoCellsBottom[:],
-					score.CellCountingStage(web.arena.MatchState >= field.TeleopPeriod)) {
-					scoreChanged = true
-				}
-			case "E":
-				if decrementGoal(score.TeleopCellsInner[:],
-					score.CellCountingStage(web.arena.MatchState >= field.TeleopPeriod)) {
-					scoreChanged = true
-				}
-			case "D":
-				if decrementGoal(score.TeleopCellsOuter[:],
-					score.CellCountingStage(web.arena.MatchState >= field.TeleopPeriod)) {
-					scoreChanged = true
-				}
-			case "C":
-				if decrementGoal(score.TeleopCellsBottom[:],
-					score.CellCountingStage(web.arena.MatchState >= field.TeleopPeriod)) {
-					scoreChanged = true
-				}
-			case "R":
-				if incrementGoal(score.TeleopCellsInner[:],
-					score.CellCountingStage(web.arena.MatchState >= field.TeleopPeriod)) {
-					scoreChanged = true
-				}
-			case "F":
-				if incrementGoal(score.TeleopCellsOuter[:],
-					score.CellCountingStage(web.arena.MatchState >= field.TeleopPeriod)) {
-					scoreChanged = true
-				}
-			case "V":
-				if incrementGoal(score.TeleopCellsBottom[:],
-					score.CellCountingStage(web.arena.MatchState >= field.TeleopPeriod)) {
-					scoreChanged = true
-				}
-			case "O":
-				if score.ControlPanelStatus >= game.ControlPanelRotation {
-					score.ControlPanelStatus = game.ControlPanelNone
-				} else if score.StageAtCapacity(game.Stage2, true) {
-					score.ControlPanelStatus = game.ControlPanelRotation
-				}
-				scoreChanged = true
-			case "K":
-				if score.ControlPanelStatus == game.ControlPanelRotation {
-					controlPanel := &(*realtimeScore).ControlPanel
-					controlPanel.CurrentColor++
-					if controlPanel.CurrentColor == 5 {
-						controlPanel.CurrentColor = 1
-					}
-					scoreChanged = true
-				}
-			case "P":
-				if score.ControlPanelStatus == game.ControlPanelPosition {
-					score.ControlPanelStatus = game.ControlPanelRotation
-				} else if score.StageAtCapacity(game.Stage3, true) {
-					score.ControlPanelStatus = game.ControlPanelPosition
-				}
-				scoreChanged = true
-			case "L":
-				score.RungIsLevel = !score.RungIsLevel
-				scoreChanged = true
+			if scoreChanged {
+				web.arena.RealtimeScoreNotifier.Notify()
 			}
 		}
-
-		if scoreChanged {
-			web.arena.RealtimeScoreNotifier.Notify()
-		}
 	}
-}
-
-// Increments the power cell count for the given goal, if the preconditions are met.
-func incrementGoal(goal []int, currentStage game.Stage) bool {
-	if int(currentStage) < len(goal) {
-		goal[currentStage]++
-		return true
-	}
-	return false
-}
-
-// Decrements the power cell count for the given goal, if the preconditions are met.
-func decrementGoal(goal []int, currentStage game.Stage) bool {
-	if int(currentStage) < len(goal) && goal[currentStage] > 0 {
-		goal[currentStage]--
-		return true
-	}
-	return false
 }

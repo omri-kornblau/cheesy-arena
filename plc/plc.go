@@ -7,7 +7,6 @@ package plc
 
 import (
 	"fmt"
-	"github.com/Team254/cheesy-arena/game"
 	"github.com/Team254/cheesy-arena/websocket"
 	"github.com/goburrow/modbus"
 	"log"
@@ -15,12 +14,34 @@ import (
 	"time"
 )
 
-type Plc struct {
-	IsHealthy        bool
-	IoChangeNotifier *websocket.Notifier
+type Plc interface {
+	SetAddress(address string)
+	IsEnabled() bool
+	IsHealthy() bool
+	IoChangeNotifier() *websocket.Notifier
+	Run()
+	GetArmorBlockStatuses() map[string]bool
+	GetFieldEstop() bool
+	GetTeamEstops() ([3]bool, [3]bool)
+	GetEthernetConnected() ([3]bool, [3]bool)
+	ResetMatch()
+	SetStackLights(red, blue, orange, green bool)
+	SetStackBuzzer(state bool)
+	SetFieldResetLight(state bool)
+	GetCycleState(max, index, duration int) bool
+	GetInputNames() []string
+	GetRegisterNames() []string
+	GetCoilNames() []string
+	GetChargeStationsLevel() (bool, bool)
+	SetChargeStationLights(redState, blueState bool)
+}
+
+type ModbusPlc struct {
 	address          string
 	handler          *modbus.TCPClientHandler
 	client           modbus.Client
+	isHealthy        bool
+	ioChangeNotifier *websocket.Notifier
 	inputs           [inputCount]bool
 	registers        [registerCount]uint16
 	coils            [coilCount]bool
@@ -39,6 +60,8 @@ const (
 )
 
 // Discrete inputs
+//
+//go:generate stringer -type=input
 type input int
 
 const (
@@ -55,42 +78,24 @@ const (
 	blueConnected1
 	blueConnected2
 	blueConnected3
-	redRungIsLevel
-	blueRungIsLevel
-	redPowerPortJam
-	bluePowerPortJam
+	redChargeStationLevel
+	blueChargeStationLevel
 	inputCount
 )
 
 // 16-bit registers
+//
+//go:generate stringer -type=register
 type register int
 
 const (
 	fieldIoConnection register = iota
-	redPowerPortBottom
-	redPowerPortOuter
-	redPowerPortInner
-	bluePowerPortBottom
-	bluePowerPortOuter
-	bluePowerPortInner
-	redControlPanelRed
-	redControlPanelGreen
-	redControlPanelBlue
-	redControlPanelIntensity
-	blueControlPanelRed
-	blueControlPanelGreen
-	blueControlPanelBlue
-	blueControlPanelIntensity
-	redControlPanelColor
-	blueControlPanelColor
-	redControlPanelLastColor
-	blueControlPanelLastColor
-	redControlPanelSegments
-	blueControlPanelSegments
 	registerCount
 )
 
 // Coils
+//
+//go:generate stringer -type=coil
 type coil int
 
 const (
@@ -102,96 +107,73 @@ const (
 	stackLightBlue
 	stackLightBuzzer
 	fieldResetLight
-	powerPortMotors
-	redStage1Light
-	redStage2Light
-	redStage3Light
-	blueStage1Light
-	blueStage2Light
-	blueStage3Light
-	redTrussLight
-	blueTrussLight
-	redControlPanelLight
-	blueControlPanelLight
+	redChargeStationLight
+	blueChargeStationLight
 	coilCount
 )
 
 // Bitmask for decoding fieldIoConnection into individual ArmorBlock connection statuses.
+//
+//go:generate stringer -type=armorBlock
 type armorBlock int
 
 const (
 	redDs armorBlock = iota
 	blueDs
-	shieldGenerator
-	controlPanel
 	armorBlockCount
 )
 
-func (plc *Plc) SetAddress(address string) {
+func (plc *ModbusPlc) SetAddress(address string) {
 	plc.address = address
 	plc.resetConnection()
 
-	if plc.IoChangeNotifier == nil {
+	if plc.ioChangeNotifier == nil {
 		// Register a notifier that listeners can subscribe to to get websocket updates about I/O value changes.
-		plc.IoChangeNotifier = websocket.NewNotifier("plcIoChange", plc.generateIoChangeMessage)
+		plc.ioChangeNotifier = websocket.NewNotifier("plcIoChange", plc.generateIoChangeMessage)
 	}
 }
 
 // Returns true if the PLC is enabled in the configurations.
-func (plc *Plc) IsEnabled() bool {
+func (plc *ModbusPlc) IsEnabled() bool {
 	return plc.address != ""
 }
 
+// Returns true if the PLC is connected and responding to requests.
+func (plc *ModbusPlc) IsHealthy() bool {
+	return plc.isHealthy
+}
+
+// Returns a notifier which fires whenever the I/O values change.
+func (plc *ModbusPlc) IoChangeNotifier() *websocket.Notifier {
+	return plc.ioChangeNotifier
+}
+
 // Loops indefinitely to read inputs from and write outputs to PLC.
-func (plc *Plc) Run() {
+func (plc *ModbusPlc) Run() {
 	for {
 		if plc.handler == nil {
 			if !plc.IsEnabled() {
 				// No PLC is configured; just allow the loop to continue to simulate inputs and outputs.
-				plc.IsHealthy = false
+				plc.isHealthy = false
 			} else {
 				err := plc.connect()
 				if err != nil {
 					log.Printf("PLC error: %v", err)
 					time.Sleep(time.Second * plcRetryIntevalSec)
-					plc.IsHealthy = false
+					plc.isHealthy = false
 					continue
 				}
 			}
 		}
 
 		startTime := time.Now()
-
-		if plc.handler != nil {
-			isHealthy := true
-			isHealthy = isHealthy && plc.writeCoils()
-			isHealthy = isHealthy && plc.readInputs()
-			isHealthy = isHealthy && plc.readRegisters()
-			if !isHealthy {
-				plc.resetConnection()
-			}
-			plc.IsHealthy = isHealthy
-		}
-
-		plc.cycleCounter++
-		if plc.cycleCounter == cycleCounterMax {
-			plc.cycleCounter = 0
-		}
-
-		// Detect any changes in input or output and notify listeners if so.
-		if plc.inputs != plc.oldInputs || plc.registers != plc.oldRegisters || plc.coils != plc.oldCoils {
-			plc.IoChangeNotifier.Notify()
-			plc.oldInputs = plc.inputs
-			plc.oldRegisters = plc.registers
-			plc.oldCoils = plc.coils
-		}
-
+		plc.update()
 		time.Sleep(time.Until(startTime.Add(time.Millisecond * plcLoopPeriodMs)))
 	}
 }
 
 // Returns a map of ArmorBlocks I/O module names to whether they are connected properly.
-func (plc *Plc) GetArmorBlockStatuses() map[string]bool {
+func (plc *ModbusPlc) GetArmorBlockStatuses() map[string]bool {
 	statuses := make(map[string]bool, armorBlockCount)
 	for i := 0; i < int(armorBlockCount); i++ {
 		statuses[strings.Title(armorBlock(i).String())] = plc.registers[fieldIoConnection]&(1<<i) > 0
@@ -200,26 +182,24 @@ func (plc *Plc) GetArmorBlockStatuses() map[string]bool {
 }
 
 // Returns the state of the field emergency stop button (true if e-stop is active).
-func (plc *Plc) GetFieldEstop() bool {
-	return plc.IsEnabled() && !plc.inputs[fieldEstop]
+func (plc *ModbusPlc) GetFieldEstop() bool {
+	return !plc.inputs[fieldEstop]
 }
 
 // Returns the state of the red and blue driver station emergency stop buttons (true if e-stop is active).
-func (plc *Plc) GetTeamEstops() ([3]bool, [3]bool) {
+func (plc *ModbusPlc) GetTeamEstops() ([3]bool, [3]bool) {
 	var redEstops, blueEstops [3]bool
-	if plc.IsEnabled() {
-		redEstops[0] = !plc.inputs[redEstop1]
-		redEstops[1] = !plc.inputs[redEstop2]
-		redEstops[2] = !plc.inputs[redEstop3]
-		blueEstops[0] = !plc.inputs[blueEstop1]
-		blueEstops[1] = !plc.inputs[blueEstop2]
-		blueEstops[2] = !plc.inputs[blueEstop3]
-	}
+	redEstops[0] = !plc.inputs[redEstop1]
+	redEstops[1] = !plc.inputs[redEstop2]
+	redEstops[2] = !plc.inputs[redEstop3]
+	blueEstops[0] = !plc.inputs[blueEstop1]
+	blueEstops[1] = !plc.inputs[blueEstop2]
+	blueEstops[2] = !plc.inputs[blueEstop3]
 	return redEstops, blueEstops
 }
 
 // Returns whether anything is connected to each station's designated Ethernet port on the SCC.
-func (plc *Plc) GetEthernetConnected() ([3]bool, [3]bool) {
+func (plc *ModbusPlc) GetEthernetConnected() ([3]bool, [3]bool) {
 	return [3]bool{
 			plc.inputs[redConnected1],
 			plc.inputs[redConnected2],
@@ -233,43 +213,13 @@ func (plc *Plc) GetEthernetConnected() ([3]bool, [3]bool) {
 }
 
 // Resets the internal state of the PLC to start a new match.
-func (plc *Plc) ResetMatch() {
+func (plc *ModbusPlc) ResetMatch() {
 	plc.coils[matchReset] = true
 	plc.matchResetCycles = 0
 }
 
-// Returns the total number of power cells scored since match start in each level of the red and blue power ports.
-func (plc *Plc) GetPowerPorts() ([3]int, [3]int) {
-	return [3]int{
-			int(plc.registers[redPowerPortBottom]),
-			int(plc.registers[redPowerPortOuter]),
-			int(plc.registers[redPowerPortInner]),
-		},
-		[3]int{
-			int(plc.registers[bluePowerPortBottom]),
-			int(plc.registers[bluePowerPortOuter]),
-			int(plc.registers[bluePowerPortInner]),
-		}
-}
-
-// Returns whether each of the red and blue power ports are jammed.
-func (plc *Plc) GetPowerPortJams() (bool, bool) {
-	return plc.inputs[redPowerPortJam], plc.inputs[bluePowerPortJam]
-}
-
-// Returns the current color and number of segment transitions for each of the red and blue control panels.
-func (plc *Plc) GetControlPanels() (game.ControlPanelColor, int, game.ControlPanelColor, int) {
-	return game.ControlPanelColor(plc.registers[redControlPanelColor]), int(plc.registers[redControlPanelSegments]),
-		game.ControlPanelColor(plc.registers[blueControlPanelColor]), int(plc.registers[blueControlPanelSegments])
-}
-
-// Returns whether each of the red and blue rungs is level.
-func (plc *Plc) GetRungs() (bool, bool) {
-	return plc.inputs[redRungIsLevel], plc.inputs[blueRungIsLevel]
-}
-
 // Sets the on/off state of the stack lights on the scoring table.
-func (plc *Plc) SetStackLights(red, blue, orange, green bool) {
+func (plc *ModbusPlc) SetStackLights(red, blue, orange, green bool) {
 	plc.coils[stackLightRed] = red
 	plc.coils[stackLightBlue] = blue
 	plc.coils[stackLightOrange] = orange
@@ -277,47 +227,20 @@ func (plc *Plc) SetStackLights(red, blue, orange, green bool) {
 }
 
 // Triggers the "match ready" chime if the state is true.
-func (plc *Plc) SetStackBuzzer(state bool) {
+func (plc *ModbusPlc) SetStackBuzzer(state bool) {
 	plc.coils[stackLightBuzzer] = state
 }
 
 // Sets the on/off state of the field reset light.
-func (plc *Plc) SetFieldResetLight(state bool) {
+func (plc *ModbusPlc) SetFieldResetLight(state bool) {
 	plc.coils[fieldResetLight] = state
 }
 
-// Sets the on/off state of the agitator motors within each power port.
-func (plc *Plc) SetPowerPortMotors(state bool) {
-	plc.coils[powerPortMotors] = state
-}
-
-// Sets the on/off state of the lights mounted within the shield generator trussing.
-func (plc *Plc) SetStageActivatedLights(red, blue [3]bool) {
-	plc.coils[redStage1Light] = red[0]
-	plc.coils[redStage2Light] = red[1]
-	plc.coils[redStage3Light] = red[2]
-	plc.coils[blueStage1Light] = blue[0]
-	plc.coils[blueStage2Light] = blue[1]
-	plc.coils[blueStage3Light] = blue[2]
-}
-
-// Sets the on/off state of the red and blue alliance stack lights mounted to the control panel.
-func (plc *Plc) SetControlPanelLights(red, blue bool) {
-	plc.coils[redControlPanelLight] = red
-	plc.coils[blueControlPanelLight] = blue
-}
-
-// Sets the on/off state of the red and blue alliance stack lights mounted to the top of the shield generator.
-func (plc *Plc) SetShieldGeneratorLights(red, blue bool) {
-	plc.coils[redTrussLight] = red
-	plc.coils[blueTrussLight] = blue
-}
-
-func (plc *Plc) GetCycleState(max, index, duration int) bool {
+func (plc *ModbusPlc) GetCycleState(max, index, duration int) bool {
 	return plc.cycleCounter/duration%max == index
 }
 
-func (plc *Plc) GetInputNames() []string {
+func (plc *ModbusPlc) GetInputNames() []string {
 	inputNames := make([]string, inputCount)
 	for i := range plc.inputs {
 		inputNames[i] = input(i).String()
@@ -325,7 +248,7 @@ func (plc *Plc) GetInputNames() []string {
 	return inputNames
 }
 
-func (plc *Plc) GetRegisterNames() []string {
+func (plc *ModbusPlc) GetRegisterNames() []string {
 	registerNames := make([]string, registerCount)
 	for i := range plc.registers {
 		registerNames[i] = register(i).String()
@@ -333,7 +256,7 @@ func (plc *Plc) GetRegisterNames() []string {
 	return registerNames
 }
 
-func (plc *Plc) GetCoilNames() []string {
+func (plc *ModbusPlc) GetCoilNames() []string {
 	coilNames := make([]string, coilCount)
 	for i := range plc.coils {
 		coilNames[i] = coil(i).String()
@@ -341,7 +264,18 @@ func (plc *Plc) GetCoilNames() []string {
 	return coilNames
 }
 
-func (plc *Plc) connect() error {
+// Returns the levelness states of the red and blue charge stations, respectively.
+func (plc *ModbusPlc) GetChargeStationsLevel() (bool, bool) {
+	return plc.inputs[redChargeStationLevel], plc.inputs[blueChargeStationLevel]
+}
+
+// Sets the on/off state of the charge station lights.
+func (plc *ModbusPlc) SetChargeStationLights(redState, blueState bool) {
+	plc.coils[redChargeStationLight] = redState
+	plc.coils[blueChargeStationLight] = blueState
+}
+
+func (plc *ModbusPlc) connect() error {
 	address := fmt.Sprintf("%s:%d", plc.address, modbusPort)
 	handler := modbus.NewTCPClientHandler(address)
 	handler.Timeout = 1 * time.Second
@@ -358,14 +292,41 @@ func (plc *Plc) connect() error {
 	return nil
 }
 
-func (plc *Plc) resetConnection() {
+func (plc *ModbusPlc) resetConnection() {
 	if plc.handler != nil {
 		plc.handler.Close()
 		plc.handler = nil
 	}
 }
 
-func (plc *Plc) readInputs() bool {
+// Performs a single iteration of reading inputs from and writing outputs to the PLC.
+func (plc *ModbusPlc) update() {
+	if plc.handler != nil {
+		isHealthy := true
+		isHealthy = isHealthy && plc.writeCoils()
+		isHealthy = isHealthy && plc.readInputs()
+		isHealthy = isHealthy && plc.readRegisters()
+		if !isHealthy {
+			plc.resetConnection()
+		}
+		plc.isHealthy = isHealthy
+	}
+
+	plc.cycleCounter++
+	if plc.cycleCounter == cycleCounterMax {
+		plc.cycleCounter = 0
+	}
+
+	// Detect any changes in input or output and notify listeners if so.
+	if plc.inputs != plc.oldInputs || plc.registers != plc.oldRegisters || plc.coils != plc.oldCoils {
+		plc.ioChangeNotifier.Notify()
+		plc.oldInputs = plc.inputs
+		plc.oldRegisters = plc.registers
+		plc.oldCoils = plc.coils
+	}
+}
+
+func (plc *ModbusPlc) readInputs() bool {
 	if len(plc.inputs) == 0 {
 		return true
 	}
@@ -384,7 +345,7 @@ func (plc *Plc) readInputs() bool {
 	return true
 }
 
-func (plc *Plc) readRegisters() bool {
+func (plc *ModbusPlc) readRegisters() bool {
 	if len(plc.registers) == 0 {
 		return true
 	}
@@ -404,7 +365,7 @@ func (plc *Plc) readRegisters() bool {
 	return true
 }
 
-func (plc *Plc) writeCoils() bool {
+func (plc *ModbusPlc) writeCoils() bool {
 	// Send a heartbeat to the PLC so that it can disable outputs if the connection is lost.
 	plc.coils[heartbeat] = true
 
@@ -423,7 +384,7 @@ func (plc *Plc) writeCoils() bool {
 	return true
 }
 
-func (plc *Plc) generateIoChangeMessage() interface{} {
+func (plc *ModbusPlc) generateIoChangeMessage() any {
 	return &struct {
 		Inputs    []bool
 		Registers []uint16

@@ -7,13 +7,14 @@ package network
 
 import (
 	"fmt"
-	"github.com/Team254/cheesy-arena/model"
-	"golang.org/x/crypto/ssh"
 	"log"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Team254/cheesy-arena/model"
+	"golang.org/x/crypto/ssh"
 )
 
 const (
@@ -50,14 +51,11 @@ type sshOutput struct {
 	err    error
 }
 
-func (ap *AccessPoint) SetSettings(address, username, password string, teamChannel, adminChannel int,
-	adminWpaKey string, networkSecurityEnabled bool) {
+func (ap *AccessPoint) SetSettings(address, username, password string, teamChannel int, networkSecurityEnabled bool) {
 	ap.address = address
 	ap.username = username
 	ap.password = password
 	ap.teamChannel = teamChannel
-	ap.adminChannel = adminChannel
-	ap.adminWpaKey = adminWpaKey
 	ap.networkSecurityEnabled = networkSecurityEnabled
 
 	// Create config channel the first time this method is called.

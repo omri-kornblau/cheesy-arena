@@ -36,7 +36,7 @@ On recent versions of macOS, you may be prevented from running an app from an un
 
 **From source**
 
-1. Download [Go](https://golang.org/dl/) (version 1.16 or later recommended)
+1. Download [Go](https://golang.org/dl/) (version 1.20 or later recommended)
 1. Clone this GitHub repository to a location of your choice
 1. Navigate to the repository's directory in the terminal
 1. Compile the code with `go build`
@@ -61,7 +61,7 @@ Schedule generation is fast because pre-generated schedules are included with th
 Cheesy Arena includes support for, but doesn't require, networking hardware similar to that used in official FRC events. Teams are issued their own SSIDs and WPA keys, and when connected to Cheesy Arena are isolated to a VLAN which prevents any communication other than between the driver station, robot, and event server. The network hardware is reconfigured via SSH and Telnet commands for the new set of teams when each mach is loaded.
 
 ## PLC integration
-Cheesy Arena has the ability to integrate with an Allen-Bradley PLC setup similar to the one that FIRST uses, to read field sensors and control lights and motors. The PLC hardware travels with the Chezy Champs field.
+Cheesy Arena has the ability to integrate with an Allen-Bradley PLC setup similar to the one that FIRST uses, to read field sensors and control lights and motors. The PLC hardware travels with the FIRST California fields; contact your FTA for more information.
 
 The PLC code can be found [here](https://github.com/ejordan376/Cheesy-PLC).
 

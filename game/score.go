@@ -1,172 +1,134 @@
-// Copyright 2020 Team 254. All Rights Reserved.
+// Copyright 2023 Team 254. All Rights Reserved.
 // Author: pat@patfairbank.com (Patrick Fairbank)
 //
 // Model representing the instantaneous score of a match.
 
 package game
 
-import "math"
-
 type Score struct {
-	ExitedInitiationLine [3]bool
-	AutoCellsBottom      [2]int
-	AutoCellsOuter       [2]int
-	AutoCellsInner       [2]int
-	TeleopCellsBottom    [4]int
-	TeleopCellsOuter     [4]int
-	TeleopCellsInner     [4]int
-	ControlPanelStatus
-	EndgameStatuses            [3]EndgameStatus
-	RungIsLevel                bool
-	Fouls                      []Foul
-	ElimDq                     bool
-	PositionControlTargetColor ControlPanelColor
+	MobilityStatuses          [3]bool
+	Grid                      Grid
+	AutoDockStatuses          [3]bool
+	AutoChargeStationLevel    bool
+	EndgameStatuses           [3]EndgameStatus
+	EndgameChargeStationLevel bool
+	Fouls                     []Foul
+	PlayoffDq                 bool
 }
 
-type ScoreSummary struct {
-	InitiationLinePoints     int
-	AutoPowerCellPoints      int
-	AutoPoints               int
-	TeleopPowerCellPoints    int
-	PowerCellPoints          int
-	ControlPanelPoints       int
-	EndgamePoints            int
-	FoulPoints               int
-	Score                    int
-	StagePowerCellsRemaining [3]int
-	StagesActivated          [3]bool
-	ControlPanelRankingPoint bool
-	EndgameRankingPoint      bool
-}
-
-// Defines the number of power cells that must be scored within each Stage before it can be activated.
-var StageCapacities = map[Stage]int{
-	Stage1: 9,
-	Stage2: 15,
-	Stage3: 15,
-}
-
-// Represents a Stage towards whose capacity scored power cells are counted.
-type Stage int
-
-const (
-	Stage1 Stage = iota
-	Stage2
-	Stage3
-	StageExtra
-)
+var SustainabilityBonusLinkThresholdWithoutCoop = 7
+var SustainabilityBonusLinkThresholdWithCoop = 6
+var ActivationBonusPointThreshold = 26
 
 // Represents the state of a robot at the end of the match.
 type EndgameStatus int
 
 const (
 	EndgameNone EndgameStatus = iota
-	EndgamePark
-	EndgameHang
+	EndgameParked
+	EndgameDocked
 )
 
 // Calculates and returns the summary fields used for ranking and display.
-func (score *Score) Summarize(opponentFouls []Foul, teleopStarted bool) *ScoreSummary {
+func (score *Score) Summarize(opponentScore *Score) *ScoreSummary {
 	summary := new(ScoreSummary)
 
-	// Leave the score at zero if the team was disqualified.
-	if score.ElimDq {
+	// Leave the score at zero if the alliance was disqualified.
+	if score.PlayoffDq {
 		return summary
 	}
 
 	// Calculate autonomous period points.
-	for _, exited := range score.ExitedInitiationLine {
-		if exited {
-			summary.InitiationLinePoints += 5
+	for _, mobility := range score.MobilityStatuses {
+		if mobility {
+			summary.MobilityPoints += 3
 		}
 	}
-	for i := 0; i < len(score.AutoCellsBottom); i++ {
-		summary.AutoPowerCellPoints += 2 * score.AutoCellsBottom[i]
-		summary.AutoPowerCellPoints += 4 * score.AutoCellsOuter[i]
-		summary.AutoPowerCellPoints += 6 * score.AutoCellsInner[i]
-	}
-	summary.AutoPoints = summary.InitiationLinePoints + summary.AutoPowerCellPoints
-
+	autoGridPoints := score.Grid.AutoGamePiecePoints()
+	autoChargeStationPoints := 0
 	for i := 0; i < 3; i++ {
-		currentStage := Stage(i)
-		summary.StagePowerCellsRemaining[i] = StageCapacities[currentStage] - score.stagePowerCells(currentStage)
-		if summary.StagePowerCellsRemaining[i] < 0 {
-			summary.StagePowerCellsRemaining[i] = 0
-		}
-	}
-
-	// Calculate teleoperated period power cell points.
-	for i := 0; i < len(score.TeleopCellsBottom); i++ {
-		summary.TeleopPowerCellPoints += score.TeleopCellsBottom[i]
-		summary.TeleopPowerCellPoints += 2 * score.TeleopCellsOuter[i]
-		summary.TeleopPowerCellPoints += 3 * score.TeleopCellsInner[i]
-	}
-	summary.PowerCellPoints = summary.AutoPowerCellPoints + summary.TeleopPowerCellPoints
-
-	// Calculate control panel points and stages.
-	for i := Stage1; i <= Stage3; i++ {
-		summary.StagesActivated[i] = score.stageActivated(i, teleopStarted)
-		summary.StagePowerCellsRemaining[i] = int(math.Max(0, float64(StageCapacities[i]-score.stagePowerCells(i))))
-	}
-	if summary.StagesActivated[Stage2] {
-		summary.ControlPanelPoints += 15
-	}
-	if summary.StagesActivated[Stage3] {
-		summary.ControlPanelPoints += 20
-		summary.ControlPanelRankingPoint = true
-	}
-
-	for i := 0; i < 3; i++ {
-		summary.StagesActivated[i] = score.stageActivated(Stage(i), teleopStarted)
-	}
-
-	// Calculate endgame points.
-	anyHang := false
-	for _, status := range score.EndgameStatuses {
-		if status == EndgamePark {
-			summary.EndgamePoints += 5
-		} else if status == EndgameHang {
-			summary.EndgamePoints += 25
-			anyHang = true
-		}
-	}
-	if score.RungIsLevel && anyHang {
-		summary.EndgamePoints += 15
-	}
-	summary.EndgameRankingPoint = summary.EndgamePoints >= 65
-
-	// Calculate penalty points.
-	for _, foul := range opponentFouls {
-		summary.FoulPoints += foul.PointValue()
-	}
-
-	// Check for the opponent fouls that automatically trigger a ranking point.
-	for _, foul := range opponentFouls {
-		if foul.Rule() != nil && foul.Rule().IsRankingPoint {
-			summary.ControlPanelRankingPoint = true
+		if score.AutoDockStatuses[i] {
+			autoChargeStationPoints += 8
+			if score.AutoChargeStationLevel {
+				autoChargeStationPoints += 4
+			}
 			break
 		}
 	}
+	summary.AutoPoints = summary.MobilityPoints + autoGridPoints + autoChargeStationPoints
 
-	summary.Score = summary.AutoPoints + summary.TeleopPowerCellPoints + summary.ControlPanelPoints +
-		summary.EndgamePoints + summary.FoulPoints
+	// Calculate teleoperated period points.
+	teleopGridPoints := score.Grid.TeleopGamePiecePoints() + score.Grid.LinkPoints() + score.Grid.SuperchargedPoints()
+	teleopChargeStationPoints := 0
+	for i := 0; i < 3; i++ {
+		switch score.EndgameStatuses[i] {
+		case EndgameParked:
+			summary.ParkPoints += 2
+		case EndgameDocked:
+			teleopChargeStationPoints += 6
+			if score.EndgameChargeStationLevel {
+				teleopChargeStationPoints += 4
+			}
+		}
+	}
+
+	summary.GridPoints = autoGridPoints + teleopGridPoints
+	summary.ChargeStationPoints = autoChargeStationPoints + teleopChargeStationPoints
+	summary.EndgamePoints = teleopChargeStationPoints + summary.ParkPoints
+	summary.MatchPoints = summary.MobilityPoints + summary.GridPoints + summary.ChargeStationPoints + summary.ParkPoints
+
+	// Calculate penalty points.
+	for _, foul := range opponentScore.Fouls {
+		summary.FoulPoints += foul.PointValue()
+		// Store the number of tech fouls since it is used to break ties in playoffs.
+		if foul.IsTechnical {
+			summary.NumOpponentTechFouls++
+		}
+
+		rule := foul.Rule()
+		if rule != nil {
+			// Check for the opponent fouls that automatically trigger a ranking point.
+			if rule.IsRankingPoint {
+				summary.SustainabilityBonusRankingPoint = true
+			}
+		}
+	}
+
+	summary.Score = summary.MatchPoints + summary.FoulPoints
+
+	// Calculate bonus ranking points.
+	summary.CoopertitionBonus = score.Grid.IsCoopertitionThresholdAchieved() &&
+		opponentScore.Grid.IsCoopertitionThresholdAchieved()
+	summary.NumLinks = len(score.Grid.Links())
+	summary.NumLinksGoal = SustainabilityBonusLinkThresholdWithoutCoop
+	// A SustainabilityBonusLinkThresholdWithCoop of 0 disables the coopertition bonus.
+	if SustainabilityBonusLinkThresholdWithCoop > 0 && summary.CoopertitionBonus {
+		summary.NumLinksGoal = SustainabilityBonusLinkThresholdWithCoop
+	}
+	if summary.NumLinks >= summary.NumLinksGoal {
+		summary.SustainabilityBonusRankingPoint = true
+	}
+	summary.ActivationBonusRankingPoint = summary.ChargeStationPoints >= ActivationBonusPointThreshold
+
+	if summary.SustainabilityBonusRankingPoint {
+		summary.BonusRankingPoints++
+	}
+	if summary.ActivationBonusRankingPoint {
+		summary.BonusRankingPoints++
+	}
 
 	return summary
 }
 
 // Returns true if and only if all fields of the two scores are equal.
 func (score *Score) Equals(other *Score) bool {
-	if score.ExitedInitiationLine != other.ExitedInitiationLine ||
-		score.AutoCellsBottom != other.AutoCellsBottom ||
-		score.AutoCellsOuter != other.AutoCellsOuter ||
-		score.AutoCellsInner != other.AutoCellsInner ||
-		score.TeleopCellsBottom != other.TeleopCellsBottom ||
-		score.TeleopCellsOuter != other.TeleopCellsOuter ||
-		score.TeleopCellsInner != other.TeleopCellsInner ||
-		score.ControlPanelStatus != other.ControlPanelStatus ||
+	if score.MobilityStatuses != other.MobilityStatuses ||
+		score.Grid != other.Grid ||
+		score.AutoDockStatuses != other.AutoDockStatuses ||
+		score.AutoChargeStationLevel != other.AutoChargeStationLevel ||
 		score.EndgameStatuses != other.EndgameStatuses ||
-		score.RungIsLevel != other.RungIsLevel ||
-		score.ElimDq != other.ElimDq ||
+		score.EndgameChargeStationLevel != other.EndgameChargeStationLevel ||
+		score.PlayoffDq != other.PlayoffDq ||
 		len(score.Fouls) != len(other.Fouls) {
 		return false
 	}
@@ -178,53 +140,4 @@ func (score *Score) Equals(other *Score) bool {
 	}
 
 	return true
-}
-
-// Returns the Stage (1-3) that the score represents, in terms of which Stage scored power cells should count towards.
-func (score *Score) CellCountingStage(teleopStarted bool) Stage {
-	if score.stageActivated(Stage3, teleopStarted) {
-		return StageExtra
-	}
-	if score.stageActivated(Stage2, teleopStarted) {
-		return Stage3
-	}
-	if score.stageActivated(Stage1, teleopStarted) {
-		return Stage2
-	}
-	return Stage1
-}
-
-// Returns true if the preconditions are satisfied for the given Stage to be activated.
-func (score *Score) StageAtCapacity(stage Stage, teleopStarted bool) bool {
-	if stage > Stage1 && !score.stageActivated(stage-1, teleopStarted) {
-		return false
-	}
-	if capacity, ok := StageCapacities[stage]; ok && score.stagePowerCells(stage) >= capacity {
-		return true
-	}
-	return false
-}
-
-// Returns true if the given Stage has been activated.
-func (score *Score) stageActivated(stage Stage, teleopStarted bool) bool {
-	if score.StageAtCapacity(stage, teleopStarted) {
-		switch stage {
-		case Stage1:
-			return teleopStarted
-		case Stage2:
-			return score.ControlPanelStatus >= ControlPanelRotation
-		case Stage3:
-			return score.ControlPanelStatus == ControlPanelPosition
-		}
-	}
-	return false
-}
-
-// Returns the total count of scored power cells within the given Stage.
-func (score *Score) stagePowerCells(stage Stage) int {
-	cells := score.TeleopCellsBottom[stage] + score.TeleopCellsOuter[stage] + score.TeleopCellsInner[stage]
-	if stage < Stage3 {
-		cells += score.AutoCellsBottom[stage] + score.AutoCellsOuter[stage] + score.AutoCellsInner[stage]
-	}
-	return cells
 }

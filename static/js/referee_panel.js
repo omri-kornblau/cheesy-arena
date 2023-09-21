@@ -92,6 +92,11 @@ var commitFoul = function() {
       TeamId: parseInt(foulTeamButton.attr("data-team")), RuleId: parseInt(foulRuleButton.attr("data-rule-id"))});
 };
 
+// Sends the foul to the server to add it to the list.
+const addFoul = function(alliance, isTechnical) {
+  websocket.send("addFoul", {Alliance: alliance, IsTechnical: isTechnical});
+}
+
 // Removes the foul with the given parameters from the list.
 var deleteFoul = function(alliance, team, ruleId, timeSec) {
   websocket.send("deleteFoul", {Alliance: alliance, TeamId: parseInt(team), RuleId: parseInt(ruleId),

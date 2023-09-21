@@ -11,81 +11,45 @@
   <div class="scoring-section">
     <div class="scoring-header">
       <div>&nbsp;</div>
-      <div>Exited Initiation Line?</div>
-      <div>Endgame Status</div>
+      <div>Mobility</div>
+      <div>Auto Dock</div>
+      <div>Endgame</div>
     </div>
     {{range $i := seq 3}}
       <div>
         <div id="team{{$i}}" class="team robot-field"></div>
-        <div id="exitedInitiationLine{{$i}}" class="boolean robot-field" onclick="handleClick('{{$i}}');">
-          <div class="shortcut">{{$i}}</div>
+        <div id="mobilityStatus{{$i}}" class="boolean robot-field" onclick="handleClick('mobilityStatus', {{$i}});">
           <div class="value"></div>
-          <div class="shortcut"></div>
         </div>
-        <div id="endgameStatus{{$i}}" class="endgame-status robot-field" onclick="handleClick('{{add $i 3}}');">
-          <div class="shortcut">{{add $i 3}}</div>
+        <div id="autoDockStatus{{$i}}" class="boolean robot-field" onclick="handleClick('autoDockStatus', {{$i}});">
           <div class="value"></div>
-          <div class="shortcut"></div>
+        </div>
+        <div id="endgameStatus{{$i}}" class="endgame-status robot-field"
+          onclick="handleClick('endgameStatus', {{$i}});">
+          <div class="value"></div>
         </div>
       </div>
     {{end}}
   </div>
-  {{if not .PlcIsEnabled}}
-    <div id="elements">
-      <div class="scoring-section">
-        <div>
-          <div>&nbsp;</div>
-          <div class="goal-header">Inner</div>
-          <div class="goal-header">Outer</div>
-          <div class="goal-header">Lower</div>
-        </div>
-        <div>
-          <div class="goal-period">Auto</div>
-          {{template "goal" dict "period" "auto" "level" "Inner" "plus" "W" "minus" "Q"}}
-          {{template "goal" dict "period" "auto" "level" "Outer" "plus" "S" "minus" "A"}}
-          {{template "goal" dict "period" "auto" "level" "Bottom" "plus" "X" "minus" "Z"}}
-        </div>
-        <div>
-          <div class="goal-period">Teleop</div>
-          {{template "goal" dict "period" "teleop" "level" "Inner" "plus" "R" "minus" "E"}}
-          {{template "goal" dict "period" "teleop" "level" "Outer" "plus" "F" "minus" "D"}}
-          {{template "goal" dict "period" "teleop" "level" "Bottom" "plus" "V" "minus" "C"}}
-        </div>
-      </div>
-      <div class="scoring-section">
-        <div class="scoring-header">
-          <div>Rotation Control</div>
-          <div>Color After Rotation</div>
-          <div>Position Control</div>
-          <div>Rung Is Level</div>
-        </div>
-        <div>
-          <div id="rotationControl" class="control-panel robot-field" onclick="handleClick('O');">
-            <div class="shortcut">O</div>
-            <div class="value"></div>
-            <div class="shortcut"></div>
-          </div>
-          <div id="controlPanelColor" class="control-panel-color robot-field" onclick="handleClick('K');">
-            <div class="shortcut">K</div>
-            <div class="value"></div>
-            <div class="shortcut"></div>
-          </div>
-          <div id="positionControl" class="control-panel robot-field" onclick="handleClick('P');">
-            <div class="shortcut">P</div>
-            <div class="value"></div>
-            <div class="shortcut"></div>
-          </div>
-          <div id="rungIsLevel" class="boolean robot-field" onclick="handleClick('L');">
-            <div class="shortcut">L</div>
-            <div class="value"></div>
-            <div class="shortcut"></div>
-          </div>
-        </div>
-      </div>
+  <div id="chargeStation" class="scoring-section">
+    <div id="autoChargeStationLevel" class="charge-station-level robot-field"
+      onclick="handleClick('autoChargeStationLevel');">
+      <div class="value"></div>
     </div>
-  {{end}}
+    <div>Auto</div>
+    <div>Charge Station</div>
+    <div>Endgame</div>
+    <div id="endgameChargeStationLevel" class="charge-station-level robot-field"
+      onclick="handleClick('endgameChargeStationLevel');">
+      <div class="value"></div>
+    </div>
+  </div>
+  <div id="grid">
+    {{template "gridRow" dict "rowIndex" 2 "validNodeStates" (index .ValidGridNodeStates 2)}}
+    {{template "gridRow" dict "rowIndex" 1 "validNodeStates" (index .ValidGridNodeStates 1)}}
+    {{template "gridRow" dict "rowIndex" 0 "validNodeStates" (index .ValidGridNodeStates 0)}}
+  </div>
 </div>
-<div id="instructions">Click or use the labeled keyboard shortcuts to toggle each element</div>
 <div id="commitMatchScore">
   <button type="button" class="btn btn-info" onclick="commitMatchScore();">
     Commit Final Match Score
@@ -94,20 +58,39 @@
 <div id="postMatchMessage">Waiting for the next match...</div>
 {{end}}
 {{define "head"}}
+<link rel="manifest" href="/static/manifest/{{.Alliance}}_scoring.manifest">
+<meta name="viewport" content="width=device-width, user-scalable=no">
 <link href="/static/css/scoring_panel.css" rel="stylesheet">
 {{end}}
 {{define "script"}}
 <script src="/static/js/match_timing.js"></script>
 <script src="/static/js/scoring_panel.js"></script>
 {{end}}
-{{define "goal"}}
-<div class="goal">
-  <div class="number-button minus" onclick="handleClick('{{.minus}}');">
-    <div class="shortcut">{{.minus}}</div>-<div class="shortcut" style="opacity: 0;">{{.minus}}</div>
+{{define "gridRow"}}
+<div class="grid-row">
+  {{range $i, $validStates := .validNodeStates}}
+    {{template "gridNode" dict "rowIndex" $.rowIndex "nodeIndex" $i "validStates" $validStates}}
+  {{end}}
+</div>
+{{end}}
+{{define "gridNode"}}
+<div class="grid-node" data-node="{{.nodeIndex}}">
+  <div id="gridAutoScoringRow{{$.rowIndex}}Node{{$.nodeIndex}}" class="grid-node-auto"
+    onclick="handleClick('gridAutoScoring', 0, {{$.rowIndex}}, {{$.nodeIndex}})">
+    Auto
   </div>
-  <div id="{{.period}}Cells{{.level}}"></div>
-  <div class="number-button plus" onclick="handleClick('{{.plus}}');">
-    <div class="shortcut">{{.plus}}</div>+<div class="shortcut" style="opacity: 0;">{{.plus}}</div>
+  <div id="gridNodeStatesRow{{$.rowIndex}}Node{{$.nodeIndex}}" class="grid-node-states">
+    {{range $i, $state := .validStates}}
+      {{if ne $state "Empty"}}
+        {{template "gridNodeButton" dict "i" $i "state" $state "rowIndex" $.rowIndex "nodeIndex" $.nodeIndex}}
+      {{end}}
+    {{end}}
   </div>
+</div>
+{{end}}
+{{define "gridNodeButton"}}
+<div class="grid-node-button" data-node-state="{{nodeStateToInt .i}}"
+  onclick="handleClick('gridNode', 0, {{.rowIndex}}, {{.nodeIndex}}, {{nodeStateToInt .i}})">
+  <img src="/static/img/node_states/{{.state}}.svg" />
 </div>
 {{end}}

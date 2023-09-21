@@ -8,16 +8,16 @@ package game
 import "math/rand"
 
 type RankingFields struct {
-	RankingPoints     int
-	AutoPoints        int
-	EndgamePoints     int
-	TeleopPoints      int
-	Random            float64
-	Wins              int
-	Losses            int
-	Ties              int
-	Disqualifications int
-	Played            int
+	RankingPoints       int
+	MatchPoints         int
+	ChargeStationPoints int
+	AutoPoints          int
+	Random              float64
+	Wins                int
+	Losses              int
+	Ties                int
+	Disqualifications   int
+	Played              int
 }
 
 type Ranking struct {
@@ -51,17 +51,12 @@ func (fields *RankingFields) AddScoreSummary(ownScore *ScoreSummary, opponentSco
 	} else {
 		fields.Losses += 1
 	}
-	if ownScore.ControlPanelRankingPoint {
-		fields.RankingPoints += 1
-	}
-	if ownScore.EndgameRankingPoint {
-		fields.RankingPoints += 1
-	}
+	fields.RankingPoints += ownScore.BonusRankingPoints
 
 	// Assign tiebreaker points.
+	fields.MatchPoints += ownScore.MatchPoints
+	fields.ChargeStationPoints += ownScore.ChargeStationPoints
 	fields.AutoPoints += ownScore.AutoPoints
-	fields.EndgamePoints += ownScore.EndgamePoints
-	fields.TeleopPoints += ownScore.TeleopPowerCellPoints + ownScore.ControlPanelPoints
 }
 
 // Helper function to implement the required interface for Sort.
@@ -76,16 +71,16 @@ func (rankings Rankings) Less(i, j int) bool {
 
 	// Use cross-multiplication to keep it in integer math.
 	if a.RankingPoints*b.Played == b.RankingPoints*a.Played {
-		if a.AutoPoints*b.Played == b.AutoPoints*a.Played {
-			if a.EndgamePoints*b.Played == b.EndgamePoints*a.Played {
-				if a.TeleopPoints*b.Played == b.TeleopPoints*a.Played {
+		if a.MatchPoints*b.Played == b.MatchPoints*a.Played {
+			if a.ChargeStationPoints*b.Played == b.ChargeStationPoints*a.Played {
+				if a.AutoPoints*b.Played == b.AutoPoints*a.Played {
 					return a.Random > b.Random
 				}
-				return a.TeleopPoints*b.Played > b.TeleopPoints*a.Played
+				return a.AutoPoints*b.Played > b.AutoPoints*a.Played
 			}
-			return a.EndgamePoints*b.Played > b.EndgamePoints*a.Played
+			return a.ChargeStationPoints*b.Played > b.ChargeStationPoints*a.Played
 		}
-		return a.AutoPoints*b.Played > b.AutoPoints*a.Played
+		return a.MatchPoints*b.Played > b.MatchPoints*a.Played
 	}
 	return a.RankingPoints*b.Played > b.RankingPoints*a.Played
 }

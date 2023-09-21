@@ -49,7 +49,7 @@ func (web *Web) teamsPostHandler(w http.ResponseWriter, r *http.Request) {
 
 	for _, teamNumber := range teamNumbers {
 		team := model.Team{Id: teamNumber}
-		if web.arena.EventSettings.TBADownloadEnabled {
+		if web.arena.EventSettings.TbaDownloadEnabled {
 			if err := web.populateOfficialTeamInfo(&team); err != nil {
 				handleWebErr(w, err)
 				return
@@ -214,20 +214,6 @@ func (web *Web) teamDeletePostHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/setup/teams", 303)
 }
 
-// Publishes the team list to the web.
-func (web *Web) teamsPublishHandler(w http.ResponseWriter, r *http.Request) {
-	if !web.userIsAdmin(w, r) {
-		return
-	}
-
-	err := web.arena.TbaClient.PublishTeams(web.arena.Database)
-	if err != nil {
-		http.Error(w, "Failed to publish teams: "+err.Error(), 500)
-		return
-	}
-	http.Redirect(w, r, "/setup/teams", 303)
-}
-
 // Generates random WPA keys and saves them to the team models.
 func (web *Web) teamsGenerateWpaKeysHandler(w http.ResponseWriter, r *http.Request) {
 	if !web.userIsAdmin(w, r) {
@@ -280,7 +266,7 @@ func (web *Web) renderTeams(w http.ResponseWriter, r *http.Request, showErrorMes
 
 // Returns true if it is safe to change the team list (i.e. no matches/results exist yet).
 func (web *Web) canModifyTeamList() bool {
-	matches, err := web.arena.Database.GetMatchesByType("qualification")
+	matches, err := web.arena.Database.GetMatchesByType(model.Qualification, true)
 	if err != nil || len(matches) > 0 {
 		return false
 	}
@@ -318,7 +304,7 @@ func (web *Web) populateOfficialTeamInfo(team *model.Team) error {
 	var accomplishmentsBuffer bytes.Buffer
 	for i := len(recentAwards) - 1; i >= 0; i-- {
 		award := recentAwards[i]
-		if time.Now().Year()-award.Year <= 2 {
+		if time.Now().Year()-award.Year <= 1 {
 			accomplishmentsBuffer.WriteString(fmt.Sprintf("<p>%d %s - %s</p>", award.Year, award.EventName,
 				award.Name))
 		}

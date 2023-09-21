@@ -4,11 +4,11 @@
 // Client-side logic for the scoring interface.
 
 var websocket;
-var alliance;
+let alliance;
 
 // Handles a websocket message to update the teams for the current match.
-var handleMatchLoad = function(data) {
-  $("#matchName").text(data.MatchType + " " + data.Match.DisplayName);
+const handleMatchLoad = function(data) {
+  $("#matchName").text(data.Match.LongName);
   if (alliance === "red") {
     $("#team1").text(data.Match.Red1);
     $("#team2").text(data.Match.Red2);
@@ -21,7 +21,7 @@ var handleMatchLoad = function(data) {
 };
 
 // Handles a websocket message to update the match status.
-var handleMatchTime = function(data) {
+const handleMatchTime = function(data) {
   switch (matchStates[data.MatchState]) {
     case "PRE_MATCH":
       // Pre-match message state is set in handleRealtimeScore().
@@ -39,109 +39,63 @@ var handleMatchTime = function(data) {
 };
 
 // Handles a websocket message to update the realtime scoring fields.
-var handleRealtimeScore = function(data) {
-  var realtimeScore;
+const handleRealtimeScore = function(data) {
+  let realtimeScore;
   if (alliance === "red") {
     realtimeScore = data.Red;
   } else {
     realtimeScore = data.Blue;
   }
-  var score = realtimeScore.Score;
-  var summary = realtimeScore.ScoreSummary;
+  const score = realtimeScore.Score;
 
-  for (var i = 0; i < 3; i++) {
-    var i1 = i + 1;
-    $("#exitedInitiationLine" + i1 + ">.value").text(score.ExitedInitiationLine[i] ? "Yes" : "No");
-    $("#exitedInitiationLine" + i1).attr("data-value", score.ExitedInitiationLine[i]);
+  for (let i = 0; i < 3; i++) {
+    const i1 = i + 1;
+    $(`#mobilityStatus${i1}>.value`).text(score.MobilityStatuses[i] ? "Yes" : "No");
+    $("#mobilityStatus" + i1).attr("data-value", score.MobilityStatuses[i]);
+    $("#autoDockStatus" + i1 + ">.value").text(score.AutoDockStatuses[i] ? "Yes" : "No");
+    $("#autoDockStatus" + i1).attr("data-value", score.AutoDockStatuses[i]);
     $("#endgameStatus" + i1 + ">.value").text(getEndgameStatusText(score.EndgameStatuses[i]));
     $("#endgameStatus" + i1).attr("data-value", score.EndgameStatuses[i]);
-    setGoalValue($("#autoCellsInner"), score.AutoCellsInner);
-    setGoalValue($("#autoCellsOuter"), score.AutoCellsOuter);
-    setGoalValue($("#autoCellsBottom"), score.AutoCellsBottom);
-    setGoalValue($("#teleopCellsInner"), score.TeleopCellsInner);
-    setGoalValue($("#teleopCellsOuter"), score.TeleopCellsOuter);
-    setGoalValue($("#teleopCellsBottom"), score.TeleopCellsBottom);
   }
 
-  if (score.ControlPanelStatus >= 1) {
-    $("#rotationControl>.value").text("Yes");
-    $("#rotationControl").attr("data-value", true);
-  } else if (summary.StagePowerCellsRemaining[1] === 0) {
-    $("#rotationControl>.value").text("Unlocked");
-    $("#rotationControl").attr("data-value", false);
-  } else {
-    $("#rotationControl>.value").text("Disabled (" + summary.StagePowerCellsRemaining[1] + " left)");
-    $("#rotationControl").attr("data-value", "disabled");
-  }
-  if (score.ControlPanelStatus === 2) {
-    $("#positionControl>.value").text("Yes");
-    $("#positionControl").attr("data-value", true);
-  } else if (summary.StagePowerCellsRemaining[2] === 0) {
-    $("#positionControl>.value").text("Unlocked");
-    $("#positionControl").attr("data-value", false);
-  } else {
-    $("#positionControl>.value").text("Disabled (" + summary.StagePowerCellsRemaining[2] + " left)");
-    $("#positionControl").attr("data-value", "disabled");
-  }
-  $("#rungIsLevel>.value").text(score.RungIsLevel ? "Yes" : "No");
-  $("#rungIsLevel").attr("data-value", score.RungIsLevel);
-  $("#controlPanelColor>.value").text(getControlPanelColorText(realtimeScore.ControlPanel.CurrentColor));
-  $("#controlPanelColor").attr("data-value", realtimeScore.ControlPanel.CurrentColor);
-  $("#controlPanelColor").attr("data-control-panel-status", score.ControlPanelStatus)
-};
+  $("#autoChargeStationLevel>.value").text(score.AutoChargeStationLevel ? "Level" : "Not Level");
+  $("#autoChargeStationLevel").attr("data-value", score.AutoChargeStationLevel);
+  $("#endgameChargeStationLevel>.value").text(score.EndgameChargeStationLevel ? "Level" : "Not Level");
+  $("#endgameChargeStationLevel").attr("data-value", score.EndgameChargeStationLevel);
 
-// Handles a keyboard event and sends the appropriate websocket message.
-var handleKeyPress = function(event) {
-  websocket.send(String.fromCharCode(event.keyCode));
+  for (let i = 0; i < 3; i++) {
+    for (let j = 0; j < 9; j++) {
+      $(`#gridAutoScoringRow${i}Node${j}`).attr("data-value", score.Grid.AutoScoring[i][j]);
+      $(`#gridNodeStatesRow${i}Node${j}`).children().each(function() {
+        const element = $(this);
+        element.attr("data-value", element.attr("data-node-state") === score.Grid.Nodes[i][j].toString());
+      });
+    }
+  }
 };
 
 // Handles an element click and sends the appropriate websocket message.
-var handleClick = function(shortcut) {
-  websocket.send(shortcut);
+const handleClick = function(command, teamPosition = 0, gridRow = 0, gridNode = 0, nodeState = 0) {
+  websocket.send(command, {TeamPosition: teamPosition, GridRow: gridRow, GridNode: gridNode, NodeState: nodeState});
 };
 
 // Sends a websocket message to indicate that the score for this alliance is ready.
-var commitMatchScore = function() {
+const commitMatchScore = function() {
   websocket.send("commitMatch");
   $("#postMatchMessage").css("display", "flex");
   $("#commitMatchScore").hide();
 };
 
 // Returns the display text corresponding to the given integer endgame status value.
-var getEndgameStatusText = function(level) {
+const getEndgameStatusText = function(level) {
   switch (level) {
     case 1:
       return "Park";
     case 2:
-      return "Hang";
+      return "Dock";
     default:
       return "None";
   }
-};
-
-// Returns the display text corresponding to the given integer Control Panel color value.
-var getControlPanelColorText = function(level) {
-  switch (level) {
-    case 1:
-      return "Red";
-    case 2:
-      return "Green";
-    case 3:
-      return "Blue";
-    case 4:
-      return "Yellow";
-    default:
-      return "Unknown";
-  }
-};
-
-// Updates the power cell count for a goal, given the element and score values.
-var setGoalValue = function(element, powerCells) {
-  var total = 0;
-  $.each(powerCells, function(k, v) {
-    total += v;
-  });
-  element.text(total);
 };
 
 $(function() {
@@ -154,6 +108,4 @@ $(function() {
     matchTime: function(event) { handleMatchTime(event.data); },
     realtimeScore: function(event) { handleRealtimeScore(event.data); },
   });
-
-  $(document).keypress(handleKeyPress);
 });

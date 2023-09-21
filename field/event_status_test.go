@@ -4,6 +4,7 @@
 package field
 
 import (
+	"github.com/Team254/cheesy-arena/game"
 	"github.com/Team254/cheesy-arena/model"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -34,9 +35,9 @@ func TestEarlyLateMessage(t *testing.T) {
 	arena.LoadTestMatch()
 	assert.Equal(t, "", arena.getEarlyLateMessage())
 
-	arena.Database.CreateMatch(&model.Match{Type: "qualification", DisplayName: "1"})
-	arena.Database.CreateMatch(&model.Match{Type: "qualification", DisplayName: "2"})
-	matches, _ := arena.Database.GetMatchesByType("qualification")
+	arena.Database.CreateMatch(&model.Match{Type: model.Qualification, TypeOrder: 1})
+	arena.Database.CreateMatch(&model.Match{Type: model.Qualification, TypeOrder: 2})
+	matches, _ := arena.Database.GetMatchesByType(model.Qualification, false)
 	assert.Equal(t, 2, len(matches))
 
 	setMatch(arena.Database, &matches[0], time.Now().Add(300*time.Second), time.Time{}, false)
@@ -107,20 +108,20 @@ func TestEarlyLateMessage(t *testing.T) {
 
 	// Check other match types.
 	arena.MatchState = PreMatch
-	arena.CurrentMatch = &model.Match{Type: "practice", Time: time.Now().Add(-181 * time.Second)}
+	arena.CurrentMatch = &model.Match{Type: model.Practice, Time: time.Now().Add(-181 * time.Second)}
 	assert.Equal(t, "Event is running 3 minutes late", arena.getEarlyLateMessage())
 
-	arena.CurrentMatch = &model.Match{Type: "elimination", Time: time.Now().Add(-181 * time.Second)}
-	assert.Equal(t, "", arena.getEarlyLateMessage())
+	arena.CurrentMatch = &model.Match{Type: model.Playoff, Time: time.Now().Add(-181 * time.Second)}
+	assert.Equal(t, "Event is running 3 minutes late", arena.getEarlyLateMessage())
 }
 
 func setMatch(database *model.Database, match *model.Match, matchTime time.Time, startedAt time.Time, isComplete bool) {
 	match.Time = matchTime
 	match.StartedAt = startedAt
 	if isComplete {
-		match.Status = model.TieMatch
+		match.Status = game.TieMatch
 	} else {
-		match.Status = model.MatchNotPlayed
+		match.Status = game.MatchScheduled
 	}
 	_ = database.UpdateMatch(match)
 }

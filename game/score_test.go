@@ -12,179 +12,175 @@ func TestScoreSummary(t *testing.T) {
 	redScore := TestScore1()
 	blueScore := TestScore2()
 
-	redSummary := redScore.Summarize(blueScore.Fouls, true)
-	assert.Equal(t, 10, redSummary.InitiationLinePoints)
-	assert.Equal(t, 84, redSummary.AutoPowerCellPoints)
-	assert.Equal(t, 94, redSummary.AutoPoints)
-	assert.Equal(t, 38, redSummary.TeleopPowerCellPoints)
-	assert.Equal(t, 122, redSummary.PowerCellPoints)
-	assert.Equal(t, 15, redSummary.ControlPanelPoints)
-	assert.Equal(t, 75, redSummary.EndgamePoints)
+	redSummary := redScore.Summarize(blueScore)
+	assert.Equal(t, 6, redSummary.MobilityPoints)
+	assert.Equal(t, 36, redSummary.AutoPoints)
+	assert.Equal(t, 52, redSummary.GridPoints)
+	assert.Equal(t, 18, redSummary.ChargeStationPoints)
+	assert.Equal(t, 2, redSummary.ParkPoints)
+	assert.Equal(t, 12, redSummary.EndgamePoints)
+	assert.Equal(t, 78, redSummary.MatchPoints)
 	assert.Equal(t, 0, redSummary.FoulPoints)
-	assert.Equal(t, 222, redSummary.Score)
-	assert.Equal(t, [3]int{0, 0, 13}, redSummary.StagePowerCellsRemaining)
-	assert.Equal(t, [3]bool{true, true, false}, redSummary.StagesActivated)
-	assert.Equal(t, false, redSummary.ControlPanelRankingPoint)
-	assert.Equal(t, true, redSummary.EndgameRankingPoint)
+	assert.Equal(t, 78, redSummary.Score)
+	assert.Equal(t, false, redSummary.CoopertitionBonus)
+	assert.Equal(t, 0, redSummary.NumLinks)
+	assert.Equal(t, 7, redSummary.NumLinksGoal)
+	assert.Equal(t, false, redSummary.SustainabilityBonusRankingPoint)
+	assert.Equal(t, false, redSummary.ActivationBonusRankingPoint)
+	assert.Equal(t, 0, redSummary.BonusRankingPoints)
+	assert.Equal(t, 0, redSummary.NumOpponentTechFouls)
 
-	blueSummary := blueScore.Summarize(redScore.Fouls, true)
-	assert.Equal(t, 5, blueSummary.InitiationLinePoints)
-	assert.Equal(t, 12, blueSummary.AutoPowerCellPoints)
-	assert.Equal(t, 17, blueSummary.AutoPoints)
-	assert.Equal(t, 122, blueSummary.TeleopPowerCellPoints)
-	assert.Equal(t, 134, blueSummary.PowerCellPoints)
-	assert.Equal(t, 35, blueSummary.ControlPanelPoints)
-	assert.Equal(t, 50, blueSummary.EndgamePoints)
-	assert.Equal(t, 33, blueSummary.FoulPoints)
-	assert.Equal(t, 257, blueSummary.Score)
-	assert.Equal(t, [3]int{0, 0, 0}, blueSummary.StagePowerCellsRemaining)
-	assert.Equal(t, [3]bool{true, true, true}, blueSummary.StagesActivated)
-	assert.Equal(t, true, blueSummary.ControlPanelRankingPoint)
-	assert.Equal(t, false, blueSummary.EndgameRankingPoint)
+	blueSummary := blueScore.Summarize(redScore)
+	assert.Equal(t, 3, blueSummary.MobilityPoints)
+	assert.Equal(t, 43, blueSummary.AutoPoints)
+	assert.Equal(t, 154, blueSummary.GridPoints)
+	assert.Equal(t, 30, blueSummary.ChargeStationPoints)
+	assert.Equal(t, 0, blueSummary.ParkPoints)
+	assert.Equal(t, 18, blueSummary.EndgamePoints)
+	assert.Equal(t, 187, blueSummary.MatchPoints)
+	assert.Equal(t, 29, blueSummary.FoulPoints)
+	assert.Equal(t, 216, blueSummary.Score)
+	assert.Equal(t, false, blueSummary.CoopertitionBonus)
+	assert.Equal(t, 9, blueSummary.NumLinks)
+	assert.Equal(t, 7, blueSummary.NumLinksGoal)
+	assert.Equal(t, true, blueSummary.SustainabilityBonusRankingPoint)
+	assert.Equal(t, true, blueSummary.ActivationBonusRankingPoint)
+	assert.Equal(t, 2, blueSummary.BonusRankingPoints)
+	assert.Equal(t, 2, blueSummary.NumOpponentTechFouls)
 
-	// Test invalid foul.
+	// Test that unsetting the team and rule ID don't invalidate the foul.
+	redScore.Fouls[0].TeamId = 0
 	redScore.Fouls[0].RuleId = 0
-	assert.Equal(t, 18, blueScore.Summarize(redScore.Fouls, true).FoulPoints)
+	assert.Equal(t, 29, blueScore.Summarize(redScore).FoulPoints)
 
-	// Test elimination disqualification.
-	redScore.ElimDq = true
-	assert.Equal(t, 0, redScore.Summarize(blueScore.Fouls, true).Score)
-	assert.NotEqual(t, 0, blueScore.Summarize(blueScore.Fouls, true).Score)
-	blueScore.ElimDq = true
-	assert.Equal(t, 0, blueScore.Summarize(redScore.Fouls, true).Score)
+	// Test playoff disqualification.
+	redScore.PlayoffDq = true
+	assert.Equal(t, 0, redScore.Summarize(blueScore).Score)
+	assert.NotEqual(t, 0, blueScore.Summarize(blueScore).Score)
+	blueScore.PlayoffDq = true
+	assert.Equal(t, 0, blueScore.Summarize(redScore).Score)
 }
 
-func TestScoreSummaryRungIsLevel(t *testing.T) {
+func TestScoreSustainabilityBonusRankingPoint(t *testing.T) {
+	redScore := TestScore1()
+	blueScore := TestScore2()
+
+	redScoreSummary := redScore.Summarize(blueScore)
+	blueScoreSummary := blueScore.Summarize(redScore)
+	assert.Equal(t, false, redScoreSummary.CoopertitionBonus)
+	assert.Equal(t, 0, redScoreSummary.NumLinks)
+	assert.Equal(t, 7, redScoreSummary.NumLinksGoal)
+	assert.Equal(t, false, redScoreSummary.SustainabilityBonusRankingPoint)
+	assert.Equal(t, false, blueScoreSummary.CoopertitionBonus)
+	assert.Equal(t, 9, blueScoreSummary.NumLinks)
+	assert.Equal(t, 7, blueScoreSummary.NumLinksGoal)
+	assert.Equal(t, true, blueScoreSummary.SustainabilityBonusRankingPoint)
+
+	// Reduce blue links to 8 and verify that the bonus is still awarded.
+	blueScore.Grid.Nodes[rowBottom][0] = Empty
+	redScoreSummary = redScore.Summarize(blueScore)
+	blueScoreSummary = blueScore.Summarize(redScore)
+	assert.Equal(t, false, redScoreSummary.CoopertitionBonus)
+	assert.Equal(t, 0, redScoreSummary.NumLinks)
+	assert.Equal(t, 7, redScoreSummary.NumLinksGoal)
+	assert.Equal(t, false, redScoreSummary.SustainabilityBonusRankingPoint)
+	assert.Equal(t, false, blueScoreSummary.CoopertitionBonus)
+	assert.Equal(t, 8, blueScoreSummary.NumLinks)
+	assert.Equal(t, 7, blueScoreSummary.NumLinksGoal)
+	assert.Equal(t, true, blueScoreSummary.SustainabilityBonusRankingPoint)
+
+	// Increase non-coopertition threshold to 9.
+	SustainabilityBonusLinkThresholdWithoutCoop = 9
+	redScoreSummary = redScore.Summarize(blueScore)
+	blueScoreSummary = blueScore.Summarize(redScore)
+	assert.Equal(t, false, redScoreSummary.CoopertitionBonus)
+	assert.Equal(t, 0, redScoreSummary.NumLinks)
+	assert.Equal(t, 9, redScoreSummary.NumLinksGoal)
+	assert.Equal(t, false, redScoreSummary.SustainabilityBonusRankingPoint)
+	assert.Equal(t, false, blueScoreSummary.CoopertitionBonus)
+	assert.Equal(t, 8, blueScoreSummary.NumLinks)
+	assert.Equal(t, 9, blueScoreSummary.NumLinksGoal)
+	assert.Equal(t, false, blueScoreSummary.SustainabilityBonusRankingPoint)
+
+	// Reduce blue links to 6 and verify that the sustainability bonus is not awarded.
+	blueScore.Grid.Nodes[rowMiddle][0] = Empty
+	blueScore.Grid.Nodes[rowTop][0] = Empty
+	redScoreSummary = redScore.Summarize(blueScore)
+	blueScoreSummary = blueScore.Summarize(redScore)
+	assert.Equal(t, false, redScoreSummary.CoopertitionBonus)
+	assert.Equal(t, 0, redScoreSummary.NumLinks)
+	assert.Equal(t, 9, redScoreSummary.NumLinksGoal)
+	assert.Equal(t, false, redScoreSummary.SustainabilityBonusRankingPoint)
+	assert.Equal(t, false, blueScoreSummary.CoopertitionBonus)
+	assert.Equal(t, 6, blueScoreSummary.NumLinks)
+	assert.Equal(t, 9, blueScoreSummary.NumLinksGoal)
+	assert.Equal(t, false, blueScoreSummary.SustainabilityBonusRankingPoint)
+
+	// Make red fulfill the coopertition bonus requirement.
+	redScore.Grid.Nodes[rowBottom][4] = Cone
+	redScoreSummary = redScore.Summarize(blueScore)
+	blueScoreSummary = blueScore.Summarize(redScore)
+	assert.Equal(t, true, redScoreSummary.CoopertitionBonus)
+	assert.Equal(t, 0, redScoreSummary.NumLinks)
+	assert.Equal(t, 6, redScoreSummary.NumLinksGoal)
+	assert.Equal(t, false, redScoreSummary.SustainabilityBonusRankingPoint)
+	assert.Equal(t, true, blueScoreSummary.CoopertitionBonus)
+	assert.Equal(t, 6, blueScoreSummary.NumLinks)
+	assert.Equal(t, 6, blueScoreSummary.NumLinksGoal)
+	assert.Equal(t, true, blueScoreSummary.SustainabilityBonusRankingPoint)
+
+	// Reduce coopertition threshold to 1 and make red fulfill the sustainability bonus requirement.
+	SustainabilityBonusLinkThresholdWithCoop = 1
+	redScore.Grid.Nodes[rowBottom][5] = Cube
+	redScoreSummary = redScore.Summarize(blueScore)
+	blueScoreSummary = blueScore.Summarize(redScore)
+	assert.Equal(t, true, redScoreSummary.CoopertitionBonus)
+	assert.Equal(t, 1, redScoreSummary.NumLinks)
+	assert.Equal(t, 1, redScoreSummary.NumLinksGoal)
+	assert.Equal(t, true, redScoreSummary.SustainabilityBonusRankingPoint)
+	assert.Equal(t, true, blueScoreSummary.CoopertitionBonus)
+	assert.Equal(t, 6, blueScoreSummary.NumLinks)
+	assert.Equal(t, 1, blueScoreSummary.NumLinksGoal)
+	assert.Equal(t, true, blueScoreSummary.SustainabilityBonusRankingPoint)
+}
+
+func TestScoreActivationBonusRankingPoint(t *testing.T) {
 	var score Score
-	assert.Equal(t, 0, score.Summarize([]Foul{}, true).EndgamePoints)
-	score.RungIsLevel = true
-	assert.Equal(t, 0, score.Summarize([]Foul{}, true).EndgamePoints)
 
-	score.RungIsLevel = false
-	score.EndgameStatuses = [3]EndgameStatus{EndgamePark, EndgamePark, EndgamePark}
-	assert.Equal(t, 15, score.Summarize([]Foul{}, true).EndgamePoints)
-	score.RungIsLevel = true
-	assert.Equal(t, 15, score.Summarize([]Foul{}, true).EndgamePoints)
-
-	score.RungIsLevel = false
-	score.EndgameStatuses = [3]EndgameStatus{EndgameHang, EndgamePark, EndgamePark}
-	assert.Equal(t, 35, score.Summarize([]Foul{}, true).EndgamePoints)
-	score.RungIsLevel = true
-	assert.Equal(t, 50, score.Summarize([]Foul{}, true).EndgamePoints)
-
-	score.RungIsLevel = false
-	score.EndgameStatuses = [3]EndgameStatus{EndgameHang, EndgamePark, EndgameHang}
-	assert.Equal(t, 55, score.Summarize([]Foul{}, true).EndgamePoints)
-	score.RungIsLevel = true
-	assert.Equal(t, 70, score.Summarize([]Foul{}, true).EndgamePoints)
-
-	score.RungIsLevel = false
-	score.EndgameStatuses = [3]EndgameStatus{EndgameHang, EndgameHang, EndgameHang}
-	assert.Equal(t, 75, score.Summarize([]Foul{}, true).EndgamePoints)
-	score.RungIsLevel = true
-	assert.Equal(t, 90, score.Summarize([]Foul{}, true).EndgamePoints)
-
-	score.RungIsLevel = false
+	score.AutoDockStatuses = [3]bool{true, false, false}
 	score.EndgameStatuses = [3]EndgameStatus{EndgameNone, EndgameNone, EndgameNone}
-	assert.Equal(t, 0, score.Summarize([]Foul{}, true).EndgamePoints)
-	score.RungIsLevel = true
-	assert.Equal(t, 0, score.Summarize([]Foul{}, true).EndgamePoints)
-}
+	assert.Equal(t, false, score.Summarize(&Score{}).ActivationBonusRankingPoint)
 
-func TestScoreSummaryBoundaryConditions(t *testing.T) {
-	// Test control panel boundary conditions.
-	score := TestScore2()
-	summary := score.Summarize(score.Fouls, true)
-	assert.Equal(t, StageExtra, score.CellCountingStage(true))
-	assert.Equal(t, [3]int{0, 0, 0}, summary.StagePowerCellsRemaining)
-	assert.Equal(t, [3]bool{true, true, true}, summary.StagesActivated)
-	assert.Equal(t, true, summary.ControlPanelRankingPoint)
-	assert.Equal(t, 224, summary.Score)
+	score.AutoDockStatuses = [3]bool{true, false, false}
+	score.EndgameStatuses = [3]EndgameStatus{EndgameDocked, EndgameNone, EndgameDocked}
+	assert.Equal(t, false, score.Summarize(&Score{}).ActivationBonusRankingPoint)
 
-	score.TeleopCellsInner[0]--
-	summary = score.Summarize(score.Fouls, true)
-	assert.Equal(t, Stage1, score.CellCountingStage(true))
-	assert.Equal(t, [3]int{1, 0, 0}, summary.StagePowerCellsRemaining)
-	assert.Equal(t, [3]bool{false, false, false}, summary.StagesActivated)
-	assert.Equal(t, false, summary.ControlPanelRankingPoint)
-	assert.Equal(t, 186, summary.Score)
-	score.TeleopCellsInner[0]++
+	score.AutoChargeStationLevel = false
+	score.EndgameChargeStationLevel = true
+	assert.Equal(t, true, score.Summarize(&Score{}).ActivationBonusRankingPoint)
 
-	summary = score.Summarize(score.Fouls, false)
-	assert.Equal(t, Stage1, score.CellCountingStage(false))
-	assert.Equal(t, [3]int{0, 0, 0}, summary.StagePowerCellsRemaining)
-	assert.Equal(t, [3]bool{false, false, false}, summary.StagesActivated)
-	assert.Equal(t, false, summary.ControlPanelRankingPoint)
-	assert.Equal(t, 189, summary.Score)
+	score.AutoChargeStationLevel = true
+	score.EndgameChargeStationLevel = false
+	assert.Equal(t, false, score.Summarize(&Score{}).ActivationBonusRankingPoint)
 
-	score.TeleopCellsOuter[1] -= 7
-	summary = score.Summarize(score.Fouls, true)
-	assert.Equal(t, Stage2, score.CellCountingStage(true))
-	assert.Equal(t, [3]int{0, 2, 0}, summary.StagePowerCellsRemaining)
-	assert.Equal(t, [3]bool{true, false, false}, summary.StagesActivated)
-	assert.Equal(t, false, summary.ControlPanelRankingPoint)
-	assert.Equal(t, 175, summary.Score)
-	score.TeleopCellsOuter[1] += 7
+	ActivationBonusPointThreshold = 30
+	score.AutoChargeStationLevel = true
+	score.EndgameChargeStationLevel = true
+	assert.Equal(t, true, score.Summarize(&Score{}).ActivationBonusRankingPoint)
 
-	score.ControlPanelStatus = ControlPanelNone
-	summary = score.Summarize(score.Fouls, true)
-	assert.Equal(t, Stage2, score.CellCountingStage(true))
-	assert.Equal(t, [3]int{0, 0, 0}, summary.StagePowerCellsRemaining)
-	assert.Equal(t, [3]bool{true, false, false}, summary.StagesActivated)
-	assert.Equal(t, false, summary.ControlPanelRankingPoint)
-	assert.Equal(t, 189, summary.Score)
-	score.ControlPanelStatus = ControlPanelPosition
+	score.AutoChargeStationLevel = false
+	score.EndgameChargeStationLevel = true
+	assert.Equal(t, false, score.Summarize(&Score{}).ActivationBonusRankingPoint)
 
-	score.TeleopCellsInner[2] -= 10
-	summary = score.Summarize(score.Fouls, true)
-	assert.Equal(t, Stage3, score.CellCountingStage(true))
-	assert.Equal(t, [3]int{0, 0, 3}, summary.StagePowerCellsRemaining)
-	assert.Equal(t, [3]bool{true, true, false}, summary.StagesActivated)
-	assert.Equal(t, false, summary.ControlPanelRankingPoint)
-	assert.Equal(t, 174, summary.Score)
-	score.TeleopCellsInner[2] += 10
+	ActivationBonusPointThreshold = 42
+	score.AutoDockStatuses = [3]bool{true, true, true}
+	score.EndgameStatuses = [3]EndgameStatus{EndgameDocked, EndgameDocked, EndgameDocked}
+	score.AutoChargeStationLevel = true
+	score.EndgameChargeStationLevel = true
+	assert.Equal(t, true, score.Summarize(&Score{}).ActivationBonusRankingPoint)
 
-	score.ControlPanelStatus = ControlPanelRotation
-	summary = score.Summarize(score.Fouls, true)
-	assert.Equal(t, Stage3, score.CellCountingStage(true))
-	assert.Equal(t, [3]int{0, 0, 0}, summary.StagePowerCellsRemaining)
-	assert.Equal(t, [3]bool{true, true, false}, summary.StagesActivated)
-	assert.Equal(t, false, summary.ControlPanelRankingPoint)
-	assert.Equal(t, 204, summary.Score)
-
-	// Test endgame boundary conditions.
-	score = TestScore1()
-	assert.Equal(t, true, score.Summarize(score.Fouls, true).EndgameRankingPoint)
-	score.EndgameStatuses[0] = EndgameNone
-	assert.Equal(t, false, score.Summarize(score.Fouls, true).EndgameRankingPoint)
-	score.RungIsLevel = true
-	assert.Equal(t, true, score.Summarize(score.Fouls, true).EndgameRankingPoint)
-	score.EndgameStatuses[2] = EndgamePark
-	assert.Equal(t, false, score.Summarize(score.Fouls, true).EndgameRankingPoint)
-}
-
-func TestScoreSummaryRankingPointFoul(t *testing.T) {
-	fouls := []Foul{{14, 0, 0}}
-	score1 := TestScore1()
-	score2 := TestScore2()
-
-	summary := score1.Summarize([]Foul{}, true)
-	assert.Equal(t, 0, summary.FoulPoints)
-	assert.Equal(t, false, summary.ControlPanelRankingPoint)
-	assert.Equal(t, true, summary.EndgameRankingPoint)
-	summary = score1.Summarize(fouls, true)
-	assert.Equal(t, 0, summary.FoulPoints)
-	assert.Equal(t, true, summary.ControlPanelRankingPoint)
-	assert.Equal(t, true, summary.EndgameRankingPoint)
-
-	summary = score2.Summarize([]Foul{}, true)
-	assert.Equal(t, 0, summary.FoulPoints)
-	assert.Equal(t, true, summary.ControlPanelRankingPoint)
-	assert.Equal(t, false, summary.EndgameRankingPoint)
-	summary = score2.Summarize(fouls, true)
-	assert.Equal(t, 0, summary.FoulPoints)
-	assert.Equal(t, true, summary.ControlPanelRankingPoint)
-	assert.Equal(t, false, summary.EndgameRankingPoint)
+	ActivationBonusPointThreshold = 43
+	assert.Equal(t, false, score.Summarize(&Score{}).ActivationBonusRankingPoint)
 }
 
 func TestScoreEquals(t *testing.T) {
@@ -198,52 +194,32 @@ func TestScoreEquals(t *testing.T) {
 	assert.False(t, score3.Equals(score1))
 
 	score2 = TestScore1()
-	score2.ExitedInitiationLine[0] = false
+	score2.MobilityStatuses[0] = false
 	assert.False(t, score1.Equals(score2))
 	assert.False(t, score2.Equals(score1))
 
 	score2 = TestScore1()
-	score2.AutoCellsBottom[1] = 3
+	score2.Grid.Nodes[rowTop][8] = ConeThenCube
 	assert.False(t, score1.Equals(score2))
 	assert.False(t, score2.Equals(score1))
 
 	score2 = TestScore1()
-	score2.AutoCellsOuter[0] = 7
+	score2.AutoDockStatuses[2] = true
 	assert.False(t, score1.Equals(score2))
 	assert.False(t, score2.Equals(score1))
 
 	score2 = TestScore1()
-	score2.AutoCellsInner[1] = 8
+	score2.AutoChargeStationLevel = true
 	assert.False(t, score1.Equals(score2))
 	assert.False(t, score2.Equals(score1))
 
 	score2 = TestScore1()
-	score2.TeleopCellsBottom[2] = 30
+	score2.EndgameStatuses[1] = EndgameParked
 	assert.False(t, score1.Equals(score2))
 	assert.False(t, score2.Equals(score1))
 
 	score2 = TestScore1()
-	score2.TeleopCellsOuter[1] = 31
-	assert.False(t, score1.Equals(score2))
-	assert.False(t, score2.Equals(score1))
-
-	score2 = TestScore1()
-	score2.TeleopCellsInner[0] = 32
-	assert.False(t, score1.Equals(score2))
-	assert.False(t, score2.Equals(score1))
-
-	score2 = TestScore1()
-	score2.ControlPanelStatus = ControlPanelNone
-	assert.False(t, score1.Equals(score2))
-	assert.False(t, score2.Equals(score1))
-
-	score2 = TestScore1()
-	score2.EndgameStatuses[1] = EndgameNone
-	assert.False(t, score1.Equals(score2))
-	assert.False(t, score2.Equals(score1))
-
-	score2 = TestScore1()
-	score2.RungIsLevel = !score2.RungIsLevel
+	score2.EndgameChargeStationLevel = false
 	assert.False(t, score1.Equals(score2))
 	assert.False(t, score2.Equals(score1))
 
@@ -253,7 +229,7 @@ func TestScoreEquals(t *testing.T) {
 	assert.False(t, score2.Equals(score1))
 
 	score2 = TestScore1()
-	score2.Fouls[0].RuleId = 1
+	score2.Fouls[0].IsTechnical = false
 	assert.False(t, score1.Equals(score2))
 	assert.False(t, score2.Equals(score1))
 
@@ -263,12 +239,12 @@ func TestScoreEquals(t *testing.T) {
 	assert.False(t, score2.Equals(score1))
 
 	score2 = TestScore1()
-	score2.Fouls[0].TimeInMatchSec += 1
+	score2.Fouls[0].RuleId = 1
 	assert.False(t, score1.Equals(score2))
 	assert.False(t, score2.Equals(score1))
 
 	score2 = TestScore1()
-	score2.ElimDq = !score2.ElimDq
+	score2.PlayoffDq = !score2.PlayoffDq
 	assert.False(t, score1.Equals(score2))
 	assert.False(t, score2.Equals(score1))
 }

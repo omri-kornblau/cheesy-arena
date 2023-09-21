@@ -16,29 +16,30 @@ import (
 )
 
 type MatchReviewListItem struct {
-	Id          int
-	DisplayName string
-	Time        string
-	RedTeams    []int
-	BlueTeams   []int
-	RedScore    int
-	BlueScore   int
-	ColorClass  string
+	Id         int
+	ShortName  string
+	Time       string
+	RedTeams   []int
+	BlueTeams  []int
+	RedScore   int
+	BlueScore  int
+	ColorClass string
+	IsComplete bool
 }
 
 // Shows the match review interface.
 func (web *Web) matchReviewHandler(w http.ResponseWriter, r *http.Request) {
-	practiceMatches, err := web.buildMatchReviewList("practice")
+	practiceMatches, err := web.buildMatchReviewList(model.Practice)
 	if err != nil {
 		handleWebErr(w, err)
 		return
 	}
-	qualificationMatches, err := web.buildMatchReviewList("qualification")
+	qualificationMatches, err := web.buildMatchReviewList(model.Qualification)
 	if err != nil {
 		handleWebErr(w, err)
 		return
 	}
-	eliminationMatches, err := web.buildMatchReviewList("elimination")
+	playoffMatches, err := web.buildMatchReviewList(model.Playoff)
 	if err != nil {
 		handleWebErr(w, err)
 		return
@@ -49,16 +50,19 @@ func (web *Web) matchReviewHandler(w http.ResponseWriter, r *http.Request) {
 		handleWebErr(w, err)
 		return
 	}
-	matchesByType := map[string][]MatchReviewListItem{"practice": practiceMatches,
-		"qualification": qualificationMatches, "elimination": eliminationMatches}
+	matchesByType := map[model.MatchType][]MatchReviewListItem{
+		model.Practice:      practiceMatches,
+		model.Qualification: qualificationMatches,
+		model.Playoff:       playoffMatches,
+	}
 	currentMatchType := web.arena.CurrentMatch.Type
-	if currentMatchType == "test" {
-		currentMatchType = "practice"
+	if currentMatchType == model.Test {
+		currentMatchType = model.Practice
 	}
 	data := struct {
 		*model.EventSettings
-		MatchesByType    map[string][]MatchReviewListItem
-		CurrentMatchType string
+		MatchesByType    map[model.MatchType][]MatchReviewListItem
+		CurrentMatchType model.MatchType
 	}{web.arena.EventSettings, matchesByType, currentMatchType}
 	err = template.ExecuteTemplate(w, "base", data)
 	if err != nil {
@@ -94,7 +98,8 @@ func (web *Web) matchReviewEditGetHandler(w http.ResponseWriter, r *http.Request
 		Match           *model.Match
 		MatchResultJson string
 		Rules           map[int]*game.Rule
-	}{web.arena.EventSettings, match, string(matchResultJson), game.GetAllRules()}
+		ValidNodeStates map[game.Row]map[int]map[game.NodeState]string
+	}{web.arena.EventSettings, match, string(matchResultJson), game.GetAllRules(), game.ValidGridNodeStates()}
 	err = template.ExecuteTemplate(w, "base", data)
 	if err != nil {
 		handleWebErr(w, err)
@@ -175,8 +180,8 @@ func (web *Web) getMatchResultFromRequest(r *http.Request) (*model.Match, *model
 }
 
 // Constructs the list of matches to display in the match review interface.
-func (web *Web) buildMatchReviewList(matchType string) ([]MatchReviewListItem, error) {
-	matches, err := web.arena.Database.GetMatchesByType(matchType)
+func (web *Web) buildMatchReviewList(matchType model.MatchType) ([]MatchReviewListItem, error) {
+	matches, err := web.arena.Database.GetMatchesByType(matchType, false)
 	if err != nil {
 		return []MatchReviewListItem{}, err
 	}
@@ -184,7 +189,7 @@ func (web *Web) buildMatchReviewList(matchType string) ([]MatchReviewListItem, e
 	matchReviewList := make([]MatchReviewListItem, len(matches))
 	for i, match := range matches {
 		matchReviewList[i].Id = match.Id
-		matchReviewList[i].DisplayName = match.TypePrefix() + match.DisplayName
+		matchReviewList[i].ShortName = match.ShortName
 		matchReviewList[i].Time = match.Time.Local().Format("Mon 1/02 03:04 PM")
 		matchReviewList[i].RedTeams = []int{match.Red1, match.Red2, match.Red3}
 		matchReviewList[i].BlueTeams = []int{match.Blue1, match.Blue2, match.Blue3}
@@ -193,18 +198,22 @@ func (web *Web) buildMatchReviewList(matchType string) ([]MatchReviewListItem, e
 			return []MatchReviewListItem{}, err
 		}
 		if matchResult != nil {
-			matchReviewList[i].RedScore = matchResult.RedScoreSummary(true).Score
-			matchReviewList[i].BlueScore = matchResult.BlueScoreSummary(true).Score
+			matchReviewList[i].RedScore = matchResult.RedScoreSummary().Score
+			matchReviewList[i].BlueScore = matchResult.BlueScoreSummary().Score
 		}
 		switch match.Status {
-		case model.RedWonMatch:
+		case game.RedWonMatch:
 			matchReviewList[i].ColorClass = "danger"
-		case model.BlueWonMatch:
+			matchReviewList[i].IsComplete = true
+		case game.BlueWonMatch:
 			matchReviewList[i].ColorClass = "info"
-		case model.TieMatch:
+			matchReviewList[i].IsComplete = true
+		case game.TieMatch:
 			matchReviewList[i].ColorClass = "warning"
+			matchReviewList[i].IsComplete = true
 		default:
 			matchReviewList[i].ColorClass = ""
+			matchReviewList[i].IsComplete = false
 		}
 	}
 

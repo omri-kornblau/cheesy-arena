@@ -64,16 +64,25 @@
                   <li><a target="_blank" href="/reports/pdf/teams">Team List</a></li>
                   <li><a target="_blank" href="/reports/pdf/schedule/practice">Practice Schedule</a></li>
                   <li><a target="_blank" href="/reports/pdf/schedule/qualification">Qualification Schedule</a></li>
-                  <li><a target="_blank" href="/reports/pdf/schedule/elimination">Playoff Schedule</a></li>
+                  <li><a target="_blank" href="/reports/pdf/schedule/playoff">Playoff Schedule</a></li>
                   <li><a target="_blank" href="/reports/pdf/rankings">Standings</a></li>
+                  <li><a target="_blank" href="/reports/pdf/alliances">Playoff Alliances</a></li>
+                  <li><a target="_blank" href="/reports/pdf/bracket">Playoff Bracket</a></li>
+                  <li><a target="_blank" href="/reports/pdf/backups">Backup Teams</a></li>
+                  <li><a target="_blank" href="/reports/pdf/coupons">Playoff Alliance Coupons</a></li>
                   <li><a target="_blank" href="/reports/pdf/teams?showHasConnected=true">Team Connection Status</a></li>
+                  <li><a target="_blank" href="/reports/pdf/cycle/practice">Practice Cycle Report</a></li>
+                  <li><a target="_blank" href="/reports/pdf/cycle/qualification">Qualification Cycle Report</a></li>
+                  <li><a target="_blank" href="/reports/pdf/cycle/playoff">Playoff Cycle Report</a></li>
                   <li class="divider"></li>
                   <li class="dropdown-header">CSV Data Export</li>
                   <li><a target="_blank" href="/reports/csv/teams">Team List</a></li>
+                  <li><a target="_blank" href="/reports/csv/fta">FTA Report</a></li>
                   <li><a target="_blank" href="/reports/csv/schedule/practice">Practice Schedule</a></li>
                   <li><a target="_blank" href="/reports/csv/schedule/qualification">Qualification Schedule</a></li>
-                  <li><a target="_blank" href="/reports/csv/schedule/elimination">Playoff Schedule</a></li>
+                  <li><a target="_blank" href="/reports/csv/schedule/playoff">Playoff Schedule</a></li>
                   <li><a target="_blank" href="/reports/csv/rankings">Standings</a></li>
+                  <li><a target="_blank" href="/reports/csv/backups">Backup Teams</a></li>
                   {{if .EventSettings.NetworkSecurityEnabled}}
                     <li><a target="_blank" href="/reports/csv/wpa_keys">WPA Keys</a></li>
                   {{end}}
@@ -87,10 +96,14 @@
                   <li><a href="/displays/audience">Audience</a></li>
                   <li><a href="/displays/liteAudience">Audience Lite</a></li>
                   <li><a href="/displays/drivers">Drivers</a></li>
+                  <li><a href="/displays/bracket">Bracket</a></li>
                   <li><a href="/displays/field_monitor">Field Monitor</a></li>
                   <li><a href="/displays/field_monitor?fta=true">Field Monitor (FTA)</a></li>
-                  <li><a href="/displays/pit">Pit</a></li>
+                  <li><a href="/displays/field_monitor?ds=true&reversed=true">Field Monitor (Blue DS)</a></li>
+                  <li><a href="/displays/field_monitor?ds=true&reversed=false">Field Monitor (Red DS)</a></li>
                   <li><a href="/displays/queueing">Queueing</a></li>
+                  <li><a href="/displays/rankings">Standings</a></li>
+                  <li><a href="/displays/wall">Wall</a></li>
                   <li class="divider"></li>
                   <li class="dropdown-header">Alliance Station</li>
                   <li><a href="/displays/alliance_station?station=R1">Red 1</a></li>
@@ -123,7 +136,7 @@
             </div>
             <div class="modal-body">
               <p>A field management system that just works.</p>
-              <p>Copyright &copy; 2014-2020 Team 254. All Rights Reserved.</p>
+              <p>Copyright &copy; 2014-2023 Team 254. All Rights Reserved.</p>
               <p><a href="https://github.com/Team254/cheesy-arena">https://github.com/Team254/cheesy-arena</a></p>
             </div>
             <div class="modal-footer">
@@ -160,7 +173,6 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="shortcut icon" href="/static/img/favicon.ico">
-  <link rel="apple-touch-icon" href="/static/img/apple-icon.png">
   <link href="/static/css/lib/bootstrap.min.css" rel="stylesheet">
   <link href="/static/css/lib/bootstrap-datetimepicker.min.css" rel="stylesheet">
   <link href="/static/css/cheesy-arena.css" rel="stylesheet">
@@ -176,4 +188,5 @@
   <script src="/static/js/lib/bootstrap-datetimepicker.min.js"></script>
   <script src="/static/js/lib/handlebars-1.3.0.js"></script>
   <script src="/static/js/cheesy-websocket.js"></script>
+  <script src="/static/js/lib/swiper-bundle.min.js"></script>
 {{end}}

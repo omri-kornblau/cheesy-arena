@@ -43,7 +43,7 @@ var handleMatchLoad = function(data) {
       $("#teamNameText").attr("data-alliance-bg", station[0]).text(team.Nickname);
 
       var ranking = data.Rankings[team.Id];
-      if (ranking && data.MatchType === "Qualification") {
+      if (ranking && data.Match.Type === matchTypeQualification) {
         var rankingText = ranking.Rank;
         $("#teamRank").attr("data-alliance-bg", station[0]).text(rankingText);
       } else {
@@ -53,6 +53,23 @@ var handleMatchLoad = function(data) {
       $("#teamNumber").text("");
       $("#teamNameText").attr("data-alliance-bg", station[0]).text("");
       $("#teamRank").attr("data-alliance-bg", station[0]).text("");
+    }
+
+    // Populate extra alliance info if this is a playoff match.
+    let playoffAlliance = data.Match.PlayoffRedAlliance;
+    let offFieldTeams = data.RedOffFieldTeams;
+    if (station[0] === "B") {
+      playoffAlliance = data.Match.PlayoffBlueAlliance;
+      offFieldTeams = data.BlueOffFieldTeams;
+    }
+    if (playoffAlliance > 0) {
+      let playoffAllianceInfo = `Alliance ${playoffAlliance}`;
+      if (offFieldTeams.length) {
+        playoffAllianceInfo += `&emsp; Not on field: ${offFieldTeams.map(team => team.Id).join(", ")}`;
+      }
+      $("#playoffAllianceInfo").html(playoffAllianceInfo);
+    } else {
+      $("#playoffAllianceInfo").text("");
     }
   }
 };
@@ -104,8 +121,12 @@ var handleMatchTime = function(data) {
 
 // Handles a websocket message to update the match score.
 var handleRealtimeScore = function(data) {
-  $("#redScore").text(data.Red.ScoreSummary.Score - data.Red.ScoreSummary.EndgamePoints);
-  $("#blueScore").text(data.Blue.ScoreSummary.Score - data.Blue.ScoreSummary.EndgamePoints);
+  $("#redScore").text(
+    data.Red.ScoreSummary.Score - data.Red.ScoreSummary.EndgamePoints
+  );
+  $("#blueScore").text(
+    data.Blue.ScoreSummary.Score - data.Blue.ScoreSummary.EndgamePoints
+  );
 };
 
 $(function() {
