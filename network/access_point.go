@@ -31,6 +31,8 @@ type AccessPoint struct {
 	username               string
 	password               string
 	teamChannel            int
+	adminChannel           int
+	adminWpaKey            string
 	networkSecurityEnabled bool
 	configRequestChan      chan [6]*model.Team
 	TeamWifiStatuses       [6]TeamWifiStatus
@@ -40,7 +42,6 @@ type AccessPoint struct {
 type TeamWifiStatus struct {
 	TeamId      int
 	RadioLinked bool
-	MBits       float64
 }
 
 type sshOutput struct {
@@ -72,11 +73,9 @@ func (ap *AccessPoint) Run() {
 			for i := 0; i < numExtraRequests; i++ {
 				request = <-ap.configRequestChan
 			}
-
 			ap.handleTeamWifiConfiguration(request)
 		case <-time.After(time.Second * accessPointPollPeriodSec):
 			ap.updateTeamWifiStatuses()
-			ap.updateTeamWifiBTU()
 		}
 	}
 }
@@ -92,6 +91,27 @@ func (ap *AccessPoint) ConfigureTeamWifi(teams [6]*model.Team) error {
 	}
 }
 
+func (ap *AccessPoint) ConfigureAdminWifi() error {
+	if !ap.networkSecurityEnabled {
+		return nil
+	}
+
+	disabled := 0
+	if ap.adminChannel == 0 {
+		disabled = 1
+	}
+	commands := []string{
+		fmt.Sprintf("set wireless.radio0.channel='%d'", ap.teamChannel),
+		fmt.Sprintf("set wireless.radio1.disabled='%d'", disabled),
+		fmt.Sprintf("set wireless.radio1.channel='%d'", ap.adminChannel),
+		fmt.Sprintf("set wireless.@wifi-iface[0].key='%s'", ap.adminWpaKey),
+		"commit wireless",
+	}
+	command := fmt.Sprintf("uci batch <<ENDCONFIG && wifi radio1\n%s\nENDCONFIG\n", strings.Join(commands, "\n"))
+	_, err := ap.runCommand(command)
+	return err
+}
+
 func (ap *AccessPoint) handleTeamWifiConfiguration(teams [6]*model.Team) {
 	if !ap.networkSecurityEnabled {
 		return
@@ -101,41 +121,37 @@ func (ap *AccessPoint) handleTeamWifiConfiguration(teams [6]*model.Team) {
 		return
 	}
 
-	// Clear the state of the radio before loading teams.
-	ap.configureTeams([6]*model.Team{nil, nil, nil, nil, nil, nil})
-	ap.configureTeams(teams)
-}
+	// Generate the configuration command.
+	config, err := generateAccessPointConfig(teams)
+	if err != nil {
+		fmt.Printf("Failed to configure team WiFi: %v", err)
+		return
+	}
+	command := fmt.Sprintf("uci batch <<ENDCONFIG && wifi radio0\n%s\nENDCONFIG\n", config)
 
-func (ap *AccessPoint) configureTeams(teams [6]*model.Team) {
-	retryCount := 1
-
+	// Loop indefinitely at writing the configuration and reading it back until it is successfully applied.
+	attemptCount := 1
 	for {
-		teamIndex := 0
-		for teamIndex < 6 {
-			config, err := generateTeamAccessPointConfig(teams[teamIndex], teamIndex+1)
-			if err != nil {
-				log.Printf("Failed to generate WiFi configuration: %v", err)
-			}
+		_, err := ap.runCommand(command)
 
-			command := addConfigurationHeader(config)
-
-			_, err = ap.runCommand(command)
-			if err != nil {
-				log.Printf("Error writing team configuration to AP: %v", err)
-				retryCount++
-				time.Sleep(time.Second * accessPointConfigRetryIntervalSec)
-				continue
-			}
-
-			teamIndex++
-		}
+		// Wait before reading the config back on write success as it doesn't take effect right away, or before retrying
+		// on failure.
 		time.Sleep(time.Second * accessPointConfigRetryIntervalSec)
-		err := ap.updateTeamWifiStatuses()
-		if err == nil && ap.configIsCorrectForTeams(teams) {
-			log.Printf("Successfully configured WiFi after %d attempts.", retryCount)
-			break
+
+		if err == nil {
+			err = ap.updateTeamWifiStatuses()
+			if err == nil && ap.configIsCorrectForTeams(teams) {
+				log.Printf("Successfully configured WiFi after %d attempts.", attemptCount)
+				return
+			}
 		}
-		log.Printf("WiFi configuration still incorrect after %d attempts; trying again.", retryCount)
+
+		if err != nil {
+			log.Printf("Error configuring WiFi: %v", err)
+		}
+
+		log.Printf("WiFi configuration still incorrect after %d attempts; trying again.", attemptCount)
+		attemptCount++
 	}
 }
 
@@ -212,31 +228,26 @@ func (ap *AccessPoint) runCommand(command string) (string, error) {
 	}
 }
 
-func addConfigurationHeader(commandList string) string {
-	return fmt.Sprintf("uci batch <<ENDCONFIG && wifi radio0\n%s\ncommit wireless\nENDCONFIG\n", commandList)
-}
-
-// Verifies WPA key validity and produces the configuration command for the given team.
-func generateTeamAccessPointConfig(team *model.Team, position int) (string, error) {
-	if position < 1 || position > 6 {
-		return "", fmt.Errorf("invalid team position %d", position)
-	}
-
+// Verifies WPA key validity and produces the configuration command for the given list of teams.
+func generateAccessPointConfig(teams [6]*model.Team) (string, error) {
 	commands := &[]string{}
-	if team == nil {
-		*commands = append(*commands, fmt.Sprintf("set wireless.@wifi-iface[%d].disabled='0'", position),
-			fmt.Sprintf("set wireless.@wifi-iface[%d].ssid='no-team-%d'", position, position),
-			fmt.Sprintf("set wireless.@wifi-iface[%d].key='no-team-%d'", position, position))
-	} else {
-		if len(team.WpaKey) < 8 || len(team.WpaKey) > 63 {
-			return "", fmt.Errorf("invalid WPA key '%s' configured for team %d", team.WpaKey, team.Id)
+	for i, team := range teams {
+		position := i + 1
+		if team == nil {
+			*commands = append(*commands, fmt.Sprintf("set wireless.@wifi-iface[%d].disabled='0'", position),
+				fmt.Sprintf("set wireless.@wifi-iface[%d].ssid='no-team-%d'", position, position),
+				fmt.Sprintf("set wireless.@wifi-iface[%d].key='no-team-%d'", position, position))
+		} else {
+			if len(team.WpaKey) < 8 || len(team.WpaKey) > 63 {
+				return "", fmt.Errorf("Invalid WPA key '%s' configured for team %d.", team.WpaKey, team.Id)
+			}
+
+			*commands = append(*commands, fmt.Sprintf("set wireless.@wifi-iface[%d].disabled='0'", position),
+				fmt.Sprintf("set wireless.@wifi-iface[%d].ssid='%d'", position, team.Id),
+				fmt.Sprintf("set wireless.@wifi-iface[%d].key='%s'", position, team.WpaKey))
 		}
-
-		*commands = append(*commands, fmt.Sprintf("set wireless.@wifi-iface[%d].disabled='0'", position),
-			fmt.Sprintf("set wireless.@wifi-iface[%d].ssid='%d'", position, team.Id),
-			fmt.Sprintf("set wireless.@wifi-iface[%d].key='%s'", position, team.WpaKey))
 	}
-
+	*commands = append(*commands, "commit wireless")
 	return strings.Join(*commands, "\n"), nil
 }
 
@@ -247,7 +258,8 @@ func decodeWifiInfo(wifiInfo string, statuses []TeamWifiStatus) error {
 	linkQualityRe := regexp.MustCompile("Link Quality: ([-\\w ]+)/([-\\w ]+)")
 	linkQualities := linkQualityRe.FindAllStringSubmatch(wifiInfo, -1)
 
-	// There should be six networks present -- one for each team on the 5GHz radio.
+	// There should be at least six networks present -- one for each team on the 5GHz radio, plus one on the 2.4GHz
+	// radio if the admin network is enabled.
 	if len(ssids) < 6 || len(linkQualities) < 6 {
 		return fmt.Errorf("Could not parse wifi info; expected 6 team networks, got %d.", len(ssids))
 	}
@@ -260,41 +272,4 @@ func decodeWifiInfo(wifiInfo string, statuses []TeamWifiStatus) error {
 	}
 
 	return nil
-}
-
-// Polls the 6 wlans on the ap for bandwith use and updates data structure.
-func (ap *AccessPoint) updateTeamWifiBTU() error {
-	if !ap.networkSecurityEnabled {
-		return nil
-	}
-
-	infWifi := []string{"0", "0-1", "0-2", "0-3", "0-4", "0-5"}
-	for i := range ap.TeamWifiStatuses {
-
-		output, err := ap.runCommand(fmt.Sprintf("luci-bwc -i wlan%s", infWifi[i]))
-		if err == nil {
-			btu := parseBtu(output)
-			ap.TeamWifiStatuses[i].MBits = btu
-		}
-		if err != nil {
-			return fmt.Errorf("Error getting BTU info from AP: %v", err)
-		}
-	}
-	return nil
-}
-
-// Parses Bytes from ap's onboard bandwith monitor returns 5 sec average bandwidth in Megabits per second for the given data.
-func parseBtu(response string) float64 {
-	mBits := 0.0
-	lines := strings.Split(response, "],")
-	if len(lines) > 6 {
-		fiveCnt := strings.Split(strings.TrimRight(strings.TrimLeft(strings.TrimSpace(lines[len(lines)-6]), "["), "]"), ",")
-		lastCnt := strings.Split(strings.TrimRight(strings.TrimLeft(strings.TrimSpace(lines[len(lines)-1]), "["), "]"), ",")
-		rXBytes, _ := strconv.Atoi(strings.TrimSpace(lastCnt[1]))
-		tXBytes, _ := strconv.Atoi(strings.TrimSpace(lastCnt[3]))
-		rXBytesOld, _ := strconv.Atoi(strings.TrimSpace(fiveCnt[1]))
-		tXBytesOld, _ := strconv.Atoi(strings.TrimSpace(fiveCnt[3]))
-		mBits = float64(rXBytes-rXBytesOld+tXBytes-tXBytesOld) * 0.000008 / 5.0
-	}
-	return mBits
 }
