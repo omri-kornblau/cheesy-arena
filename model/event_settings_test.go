@@ -19,28 +19,26 @@ func TestEventSettingsReadWrite(t *testing.T) {
 		EventSettings{
 			Id:                          1,
 			Name:                        "Untitled Event",
-			NumElimAlliances:            8,
+			PlayoffType:                 DoubleEliminationPlayoff,
+			NumPlayoffAlliances:         8,
 			SelectionRound2Order:        "L",
 			SelectionRound3Order:        "",
-			TBADownloadEnabled:          true,
+			TbaDownloadEnabled:          true,
 			ApTeamChannel:               157,
-			ApAdminChannel:              0,
-			ApAdminWpaKey:               "1234Five",
 			WarmupDurationSec:           0,
 			AutoDurationSec:             15,
-			PauseDurationSec:            2,
+			PauseDurationSec:            3,
 			TeleopDurationSec:           135,
 			WarningRemainingDurationSec: 30,
-			QuintetThreshold:            5,
-			CargoBonusRankingPointThresholdWithoutQuintet: 20,
-			CargoBonusRankingPointThresholdWithQuintet:    18,
-			HangarBonusRankingPointThreshold:              16,
+			SustainabilityBonusLinkThresholdWithoutCoop: 6,
+			SustainabilityBonusLinkThresholdWithCoop:    5,
+			ActivationBonusPointThreshold:               26,
 		},
 		*eventSettings,
 	)
 
 	eventSettings.Name = "Chezy Champs"
-	eventSettings.NumElimAlliances = 6
+	eventSettings.NumPlayoffAlliances = 6
 	eventSettings.SelectionRound2Order = "F"
 	eventSettings.SelectionRound3Order = "L"
 	err = db.UpdateEventSettings(eventSettings)

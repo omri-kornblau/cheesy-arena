@@ -18,58 +18,7 @@
       <div class="pull-left">Match Queue</div>
       <div class="pull-right">{{.EventSettings.Name}}</div>
     </div>
-    {{range $i, $match := .Matches}}
-      <div class="col-lg-10 col-lg-offset-1 well">
-        <div class="col-lg-6">
-          <div class="row">
-            <div class="col-lg-5">
-              <h1>
-                {{if eq $i 0}}
-                  On Field
-                {{else if eq $i 1}}
-                  On Deck
-                {{else if eq $i 2}}
-                  Last Call
-                {{else if eq $i 3}}
-                  Second Call
-                {{else if eq $i 4}}
-                  First Call
-                {{end}}
-              </h1>
-              <br />
-            </div>
-            <div class="col-lg-2">
-              <h1>{{$.MatchTypePrefix}}{{$match.DisplayName}}</h1>
-            </div>
-            <div class="col-lg-5">
-              <h1>{{$match.Time.Local.Format "3:04 PM"}}</h1>
-            </div>
-          </div>
-          {{if eq $i 0}}
-            <div class="row">
-              <div id="matchState" class="col-lg-5"></div>
-              <div id="matchTime" class="col-lg-3"></div>
-            </div>
-          {{end}}
-        </div>
-        <div class="col-lg-1 avatars text-right">
-          <img class="avatar" src="/api/teams/{{$match.Red1}}/avatar" /><br />
-          <img class="avatar" src="/api/teams/{{$match.Red2}}/avatar" /><br />
-          <img class="avatar" src="/api/teams/{{$match.Red3}}/avatar" />
-        </div>
-        <div class="col-lg-2 red-teams">
-          {{$match.Red1}}<br />{{$match.Red2}}<br />{{$match.Red3}}
-        </div>
-        <div class="col-lg-2 blue-teams text-right">
-          {{$match.Blue1}}<br />{{$match.Blue2}}<br />{{$match.Blue3}}
-        </div>
-        <div class="col-lg-1 avatars">
-          <img class="avatar" src="/api/teams/{{$match.Blue1}}/avatar" /><br />
-          <img class="avatar" src="/api/teams/{{$match.Blue2}}/avatar" /><br />
-          <img class="avatar" src="/api/teams/{{$match.Blue3}}/avatar" />
-        </div>
-      </div>
-    {{end}}
+    <div id="matches"></div>
     <div id="earlyLateMessage" class="col-lg-10 col-lg-offset-1"></div>
   </body>
   <script src="/static/js/lib/jquery.min.js"></script>

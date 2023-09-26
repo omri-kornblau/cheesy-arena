@@ -24,7 +24,7 @@ func SetupTestDb(t *testing.T, uniqueName string) *Database {
 }
 
 func BuildTestMatchResult(matchId int, playNumber int) *MatchResult {
-	matchResult := &MatchResult{MatchId: matchId, PlayNumber: playNumber, MatchType: "qualification"}
+	matchResult := &MatchResult{MatchId: matchId, PlayNumber: playNumber, MatchType: Qualification}
 	matchResult.RedScore = game.TestScore1()
 	matchResult.BlueScore = game.TestScore2()
 	matchResult.RedCards = map[string]string{"1868": "yellow"}
@@ -33,10 +33,6 @@ func BuildTestMatchResult(matchId int, playNumber int) *MatchResult {
 }
 
 func BuildTestAlliances(database *Database) {
-	database.CreateAllianceTeam(&AllianceTeam{0, 2, 0, 1718})
-	database.CreateAllianceTeam(&AllianceTeam{0, 1, 3, 74})
-	database.CreateAllianceTeam(&AllianceTeam{0, 1, 1, 469})
-	database.CreateAllianceTeam(&AllianceTeam{0, 1, 0, 254})
-	database.CreateAllianceTeam(&AllianceTeam{0, 1, 2, 2848})
-	database.CreateAllianceTeam(&AllianceTeam{0, 2, 1, 2451})
+	database.CreateAlliance(&Alliance{Id: 2, TeamIds: []int{1718, 2451, 1619}, Lineup: [3]int{2451, 1718, 1619}})
+	database.CreateAlliance(&Alliance{Id: 1, TeamIds: []int{254, 469, 2848, 74, 3175}, Lineup: [3]int{469, 254, 2848}})
 }

@@ -7,6 +7,7 @@ package field
 
 import (
 	"fmt"
+	"github.com/Team254/cheesy-arena/model"
 	"math"
 	"time"
 )
@@ -49,8 +50,7 @@ func (arena *Arena) updateEarlyLateMessage() {
 // Updates the string that indicates how early or late the event is running.
 func (arena *Arena) getEarlyLateMessage() string {
 	currentMatch := arena.CurrentMatch
-	if currentMatch.Type != "practice" && currentMatch.Type != "qualification" {
-		// Only practice and qualification matches have a strict schedule.
+	if currentMatch.Type == model.Test {
 		return ""
 	}
 	if currentMatch.IsComplete() {
@@ -64,7 +64,7 @@ func (arena *Arena) getEarlyLateMessage() string {
 		minutesLate = currentMatch.StartedAt.Sub(currentMatch.Time).Minutes()
 	} else {
 		// We need to check the adjacent matches to accurately determine lateness.
-		matches, _ := arena.Database.GetMatchesByType(currentMatch.Type)
+		matches, _ := arena.Database.GetMatchesByType(currentMatch.Type, false)
 
 		previousMatchIndex := -1
 		nextMatchIndex := len(matches)
@@ -76,7 +76,7 @@ func (arena *Arena) getEarlyLateMessage() string {
 			}
 		}
 
-		if arena.MatchState == PreMatch {
+		if arena.MatchState == PreMatch || arena.MatchState == TimeoutActive || arena.MatchState == PostTimeout {
 			currentMinutesLate := time.Now().Sub(currentMatch.Time).Minutes()
 			if previousMatchIndex >= 0 &&
 				currentMatch.Time.Sub(matches[previousMatchIndex].Time).Minutes() <= MaxMatchGapMin {

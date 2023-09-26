@@ -30,10 +30,12 @@ const (
 	AllianceStationDisplay
 	AnnouncerDisplay
 	AudienceDisplay
+	BracketDisplay
 	FieldMonitorDisplay
-	PitDisplay
 	QueueingDisplay
+	RankingsDisplay
 	TwitchStreamDisplay
+	WallDisplay
 )
 
 var DisplayTypeNames = map[DisplayType]string{
@@ -41,10 +43,12 @@ var DisplayTypeNames = map[DisplayType]string{
 	AllianceStationDisplay: "Alliance Station",
 	AnnouncerDisplay:       "Announcer",
 	AudienceDisplay:        "Audience",
+	BracketDisplay:         "Bracket",
 	FieldMonitorDisplay:    "Field Monitor",
-	PitDisplay:             "Pit",
 	QueueingDisplay:        "Queueing",
+	RankingsDisplay:        "Rankings",
 	TwitchStreamDisplay:    "Twitch Stream",
+	WallDisplay:            "Wall",
 }
 
 var displayTypePaths = map[DisplayType]string{
@@ -52,10 +56,12 @@ var displayTypePaths = map[DisplayType]string{
 	AllianceStationDisplay: "/displays/alliance_station",
 	AnnouncerDisplay:       "/displays/announcer",
 	AudienceDisplay:        "/displays/audience",
+	BracketDisplay:         "/displays/bracket",
 	FieldMonitorDisplay:    "/displays/field_monitor",
-	PitDisplay:             "/displays/pit",
 	QueueingDisplay:        "/displays/queueing",
+	RankingsDisplay:        "/displays/rankings",
 	TwitchStreamDisplay:    "/displays/twitch",
+	WallDisplay:            "/displays/wall",
 }
 
 var displayRegistryMutex sync.Mutex
@@ -136,7 +142,7 @@ func (display *Display) ToUrl() string {
 	return builder.String()
 }
 
-func (display *Display) generateDisplayConfigurationMessage() interface{} {
+func (display *Display) generateDisplayConfigurationMessage() any {
 	return display.ToUrl()
 }
 

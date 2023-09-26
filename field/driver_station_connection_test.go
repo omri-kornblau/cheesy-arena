@@ -4,6 +4,7 @@
 package field
 
 import (
+	"github.com/Team254/cheesy-arena/model"
 	"github.com/Team254/cheesy-arena/network"
 	"github.com/stretchr/testify/assert"
 	"net"
@@ -80,34 +81,32 @@ func TestEncodeControlPacket(t *testing.T) {
 	assert.Equal(t, byte(132), data[3])
 
 	// Check different match types.
-	arena.CurrentMatch.Type = "practice"
+	arena.CurrentMatch.Type = model.Practice
 	data = dsConn.encodeControlPacket(arena)
 	assert.Equal(t, byte(1), data[6])
-	arena.CurrentMatch.Type = "qualification"
+	arena.CurrentMatch.Type = model.Qualification
 	data = dsConn.encodeControlPacket(arena)
 	assert.Equal(t, byte(2), data[6])
-	arena.CurrentMatch.Type = "elimination"
+	arena.CurrentMatch.Type = model.Playoff
 	data = dsConn.encodeControlPacket(arena)
 	assert.Equal(t, byte(3), data[6])
 
 	// Check match numbers.
-	arena.CurrentMatch.Type = "practice"
-	arena.CurrentMatch.DisplayName = "42"
+	arena.CurrentMatch.Type = model.Practice
+	arena.CurrentMatch.TypeOrder = 42
 	data = dsConn.encodeControlPacket(arena)
 	assert.Equal(t, byte(0), data[7])
 	assert.Equal(t, byte(42), data[8])
-	arena.CurrentMatch.Type = "qualification"
-	arena.CurrentMatch.DisplayName = "258"
+	arena.CurrentMatch.Type = model.Qualification
+	arena.CurrentMatch.TypeOrder = 258
 	data = dsConn.encodeControlPacket(arena)
 	assert.Equal(t, byte(1), data[7])
 	assert.Equal(t, byte(2), data[8])
-	arena.CurrentMatch.Type = "elimination"
-	arena.CurrentMatch.ElimRound = 8
-	arena.CurrentMatch.ElimGroup = 5
-	arena.CurrentMatch.ElimInstance = 2
+	arena.CurrentMatch.Type = model.Playoff
+	arena.CurrentMatch.TypeOrder = 13
 	data = dsConn.encodeControlPacket(arena)
-	assert.Equal(t, byte(3), data[7])
-	assert.Equal(t, byte(84), data[8])
+	assert.Equal(t, byte(0), data[7])
+	assert.Equal(t, byte(13), data[8])
 
 	// Check the countdown at different points during the match.
 	arena.MatchState = AutoPeriod

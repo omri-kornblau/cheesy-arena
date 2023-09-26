@@ -13,6 +13,8 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/Team254/cheesy-arena/game"
+
 	"github.com/Team254/cheesy-arena/field"
 	"github.com/Team254/cheesy-arena/model"
 	"github.com/gorilla/mux"
@@ -34,11 +36,11 @@ func NewWeb(arena *field.Arena) *Web {
 	// Helper functions that can be used inside templates.
 	web.templateHelpers = template.FuncMap{
 		// Allows sub-templates to be invoked with multiple arguments.
-		"dict": func(values ...interface{}) (map[string]interface{}, error) {
+		"dict": func(values ...any) (map[string]any, error) {
 			if len(values)%2 != 0 {
 				return nil, fmt.Errorf("Invalid dict call.")
 			}
-			dict := make(map[string]interface{}, len(values)/2)
+			dict := make(map[string]any, len(values)/2)
 			for i := 0; i < len(values); i += 2 {
 				key, ok := values[i].(string)
 				if !ok {
@@ -75,6 +77,25 @@ func NewWeb(arena *field.Arena) *Web {
 
 			return fmt.Sprintf("T %.0f", timeFromMatchEnd)
 		},
+		"rowToInt": func(row game.Row) int {
+			return int(row)
+		},
+		"nodeStateToInt": func(nodeState game.NodeState) int {
+			return int(nodeState)
+		},
+
+		// MatchType enum values.
+		"testMatch":          model.Test.Get,
+		"practiceMatch":      model.Practice.Get,
+		"qualificationMatch": model.Qualification.Get,
+		"playoffMatch":       model.Playoff.Get,
+
+		// MatchStatus enum values.
+		"matchScheduled": game.MatchScheduled.Get,
+		"matchHidden":    game.MatchHidden.Get,
+		"redWonMatch":    game.RedWonMatch.Get,
+		"blueWonMatch":   game.BlueWonMatch.Get,
+		"tieMatch":       game.TieMatch.Get,
 	}
 
 	return web
@@ -122,11 +143,12 @@ func (web *Web) newHandler() http.Handler {
 	router.HandleFunc("/alliance_selection", web.allianceSelectionGetHandler).Methods("GET")
 	router.HandleFunc("/alliance_selection", web.allianceSelectionPostHandler).Methods("POST")
 	router.HandleFunc("/alliance_selection/finalize", web.allianceSelectionFinalizeHandler).Methods("POST")
-	router.HandleFunc("/alliance_selection/publish", web.allianceSelectionPublishHandler).Methods("POST")
 	router.HandleFunc("/alliance_selection/reset", web.allianceSelectionResetHandler).Methods("POST")
 	router.HandleFunc("/alliance_selection/start", web.allianceSelectionStartHandler).Methods("POST")
 	router.HandleFunc("/api/alliances", web.alliancesApiHandler).Methods("GET")
 	router.HandleFunc("/api/arena/websocket", web.arenaWebsocketApiHandler).Methods("GET")
+	router.HandleFunc("/api/bracket/svg", web.bracketSvgApiHandler).Methods("GET")
+	router.HandleFunc("/api/grid/{alliance}/svg", web.gridSvgApiHandler).Methods("GET")
 	router.HandleFunc("/api/matches/{type}", web.matchesApiHandler).Methods("GET")
 	router.HandleFunc("/api/rankings", web.rankingsApiHandler).Methods("GET")
 	router.HandleFunc("/api/sponsor_slides", web.sponsorSlidesApiHandler).Methods("GET")
@@ -136,46 +158,53 @@ func (web *Web) newHandler() http.Handler {
 	router.HandleFunc("/displays/alliance_station", web.allianceStationDisplayHandler).Methods("GET")
 	router.HandleFunc("/displays/alliance_station/websocket", web.allianceStationDisplayWebsocketHandler).Methods("GET")
 	router.HandleFunc("/displays/announcer", web.announcerDisplayHandler).Methods("GET")
+	router.HandleFunc("/displays/announcer/match_load", web.announcerDisplayMatchLoadHandler).Methods("GET")
+	router.HandleFunc("/displays/announcer/score_posted", web.announcerDisplayScorePostedHandler).Methods("GET")
 	router.HandleFunc("/displays/announcer/websocket", web.announcerDisplayWebsocketHandler).Methods("GET")
 	router.HandleFunc("/displays/audience", web.audienceDisplayHandler).Methods("GET")
 	router.HandleFunc("/displays/audience/websocket", web.audienceDisplayWebsocketHandler).Methods("GET")
+	router.HandleFunc("/displays/bracket", web.bracketDisplayHandler).Methods("GET")
+	router.HandleFunc("/displays/bracket/websocket", web.bracketDisplayWebsocketHandler).Methods("GET")
 	router.HandleFunc("/displays/field_monitor", web.fieldMonitorDisplayHandler).Methods("GET")
 	router.HandleFunc("/displays/field_monitor/websocket", web.fieldMonitorDisplayWebsocketHandler).Methods("GET")
-	router.HandleFunc("/displays/pit", web.pitDisplayHandler).Methods("GET")
-	router.HandleFunc("/displays/pit/websocket", web.pitDisplayWebsocketHandler).Methods("GET")
 	router.HandleFunc("/displays/queueing", web.queueingDisplayHandler).Methods("GET")
+	router.HandleFunc("/displays/queueing/match_load", web.queueingDisplayMatchLoadHandler).Methods("GET")
 	router.HandleFunc("/displays/queueing/websocket", web.queueingDisplayWebsocketHandler).Methods("GET")
+	router.HandleFunc("/displays/rankings", web.rankingsDisplayHandler).Methods("GET")
+	router.HandleFunc("/displays/rankings/websocket", web.rankingsDisplayWebsocketHandler).Methods("GET")
 	router.HandleFunc("/displays/twitch", web.twitchDisplayHandler).Methods("GET")
 	router.HandleFunc("/displays/twitch/websocket", web.twitchDisplayWebsocketHandler).Methods("GET")
+	router.HandleFunc("/displays/wall", web.wallDisplayHandler).Methods("GET")
+	router.HandleFunc("/displays/wall/websocket", web.wallDisplayWebsocketHandler).Methods("GET")
 	router.HandleFunc("/login", web.loginHandler).Methods("GET")
 	router.HandleFunc("/login", web.loginPostHandler).Methods("POST")
 	router.HandleFunc("/match_play", web.matchPlayHandler).Methods("GET")
-	router.HandleFunc("/match_play/{matchId}/load", web.matchPlayLoadHandler).Methods("GET")
-	router.HandleFunc("/match_play/{matchId}/show_result", web.matchPlayShowResultHandler).Methods("GET")
+	router.HandleFunc("/match_play/match_load", web.matchPlayMatchLoadHandler).Methods("GET")
 	router.HandleFunc("/match_play/websocket", web.matchPlayWebsocketHandler).Methods("GET")
-	router.HandleFunc("/match_play/e-stop/{alliance}/{driverStationIndex}", web.eStopHadnler).Methods("GET")
-	router.HandleFunc("/match_play/scoring/ball/{level}/{color}", web.ballCountHandler).Methods("GET")
-	router.HandleFunc("/match_play/scoring/ball/error", web.ballCountErrorHadnler).Methods("POST")
 	router.HandleFunc("/match_review", web.matchReviewHandler).Methods("GET")
 	router.HandleFunc("/match_review/{matchId}/edit", web.matchReviewEditGetHandler).Methods("GET")
 	router.HandleFunc("/match_review/{matchId}/edit", web.matchReviewEditPostHandler).Methods("POST")
 	router.HandleFunc("/panels/scoring/{alliance}", web.scoringPanelHandler).Methods("GET")
 	router.HandleFunc("/panels/scoring/{alliance}/websocket", web.scoringPanelWebsocketHandler).Methods("GET")
 	router.HandleFunc("/panels/referee", web.refereePanelHandler).Methods("GET")
+	router.HandleFunc("/panels/referee/foul_list", web.refereePanelFoulListHandler).Methods("GET")
 	router.HandleFunc("/panels/referee/websocket", web.refereePanelWebsocketHandler).Methods("GET")
-	router.HandleFunc("/reports/csv/rankings", web.rankingsCsvReportHandler).Methods("GET")
-	router.HandleFunc("/reports/pdf/rankings", web.rankingsPdfReportHandler).Methods("GET")
 	router.HandleFunc("/reports/csv/backups", web.backupTeamsCsvReportHandler).Methods("GET")
-	router.HandleFunc("/reports/pdf/backups", web.backupsPdfReportHandler).Methods("GET")
-	router.HandleFunc("/reports/pdf/coupons", web.couponsPdfReportHandler).Methods("GET")
+	router.HandleFunc("/reports/csv/fta", web.ftaCsvReportHandler).Methods("GET")
+	router.HandleFunc("/reports/csv/rankings", web.rankingsCsvReportHandler).Methods("GET")
 	router.HandleFunc("/reports/csv/schedule/{type}", web.scheduleCsvReportHandler).Methods("GET")
-	router.HandleFunc("/reports/pdf/schedule/{type}", web.schedulePdfReportHandler).Methods("GET")
 	router.HandleFunc("/reports/csv/teams", web.teamsCsvReportHandler).Methods("GET")
-	router.HandleFunc("/reports/pdf/teams", web.teamsPdfReportHandler).Methods("GET")
 	router.HandleFunc("/reports/csv/wpa_keys", web.wpaKeysCsvReportHandler).Methods("GET")
+	router.HandleFunc("/reports/pdf/alliances", web.alliancesPdfReportHandler).Methods("GET")
+	router.HandleFunc("/reports/pdf/backups", web.backupsPdfReportHandler).Methods("GET")
+	router.HandleFunc("/reports/pdf/bracket", web.bracketPdfReportHandler).Methods("GET")
+	router.HandleFunc("/reports/pdf/coupons", web.couponsPdfReportHandler).Methods("GET")
+	router.HandleFunc("/reports/pdf/cycle/{type}", web.cyclePdfReportHandler).Methods("GET")
+	router.HandleFunc("/reports/pdf/rankings", web.rankingsPdfReportHandler).Methods("GET")
+	router.HandleFunc("/reports/pdf/schedule/{type}", web.schedulePdfReportHandler).Methods("GET")
+	router.HandleFunc("/reports/pdf/teams", web.teamsPdfReportHandler).Methods("GET")
 	router.HandleFunc("/setup/awards", web.awardsGetHandler).Methods("GET")
 	router.HandleFunc("/setup/awards", web.awardsPostHandler).Methods("POST")
-	router.HandleFunc("/setup/awards/publish", web.awardsPublishHandler).Methods("POST")
 	router.HandleFunc("/setup/db/clear", web.clearDbHandler).Methods("POST")
 	router.HandleFunc("/setup/db/restore", web.restoreDbHandler).Methods("POST")
 	router.HandleFunc("/setup/db/save", web.saveDbHandler).Methods("GET")
@@ -185,14 +214,16 @@ func (web *Web) newHandler() http.Handler {
 	router.HandleFunc("/setup/field_testing/websocket", web.fieldTestingWebsocketHandler).Methods("GET")
 	router.HandleFunc("/setup/lower_thirds", web.lowerThirdsGetHandler).Methods("GET")
 	router.HandleFunc("/setup/lower_thirds/websocket", web.lowerThirdsWebsocketHandler).Methods("GET")
-	router.HandleFunc("/setup/monitor", web.monitorHandler).Methods("GET")
-	router.HandleFunc("/setup/monitor/websocket", web.monitorWebsocketHandler).Methods("GET")
 	router.HandleFunc("/setup/schedule", web.scheduleGetHandler).Methods("GET")
 	router.HandleFunc("/setup/schedule/generate", web.scheduleGeneratePostHandler).Methods("POST")
-	router.HandleFunc("/setup/schedule/republish", web.scheduleRepublishPostHandler).Methods("POST")
 	router.HandleFunc("/setup/schedule/save", web.scheduleSavePostHandler).Methods("POST")
 	router.HandleFunc("/setup/settings", web.settingsGetHandler).Methods("GET")
 	router.HandleFunc("/setup/settings", web.settingsPostHandler).Methods("POST")
+	router.HandleFunc("/setup/settings/publish_alliances", web.settingsPublishAlliancesHandler).Methods("GET")
+	router.HandleFunc("/setup/settings/publish_awards", web.settingsPublishAwardsHandler).Methods("GET")
+	router.HandleFunc("/setup/settings/publish_matches", web.settingsPublishMatchesHandler).Methods("GET")
+	router.HandleFunc("/setup/settings/publish_rankings", web.settingsPublishRankingsHandler).Methods("GET")
+	router.HandleFunc("/setup/settings/publish_teams", web.settingsPublishTeamsHandler).Methods("GET")
 	router.HandleFunc("/setup/sponsor_slides", web.sponsorSlidesGetHandler).Methods("GET")
 	router.HandleFunc("/setup/sponsor_slides", web.sponsorSlidesPostHandler).Methods("POST")
 	router.HandleFunc("/setup/teams", web.teamsGetHandler).Methods("GET")
@@ -202,10 +233,7 @@ func (web *Web) newHandler() http.Handler {
 	router.HandleFunc("/setup/teams/{id}/edit", web.teamEditPostHandler).Methods("POST")
 	router.HandleFunc("/setup/teams/clear", web.teamsClearHandler).Methods("POST")
 	router.HandleFunc("/setup/teams/generate_wpa_keys", web.teamsGenerateWpaKeysHandler).Methods("GET")
-	router.HandleFunc("/setup/teams/publish", web.teamsPublishHandler).Methods("POST")
 	router.HandleFunc("/setup/teams/refresh", web.teamsRefreshHandler).Methods("GET")
-	router.HandleFunc("/monitoring/device/error", web.deviceErrorPostHandler).Methods("POST")
-	router.HandleFunc("/monitoring/device/healthcheck/{deviceName}", web.deviceHealthcheckHandler).Methods("GET")
 	return router
 }
 

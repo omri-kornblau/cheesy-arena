@@ -6,12 +6,13 @@
 package field
 
 import (
-	"fmt"
+	"strconv"
+
 	"github.com/Team254/cheesy-arena/game"
 	"github.com/Team254/cheesy-arena/model"
 	"github.com/Team254/cheesy-arena/network"
+	"github.com/Team254/cheesy-arena/playoff"
 	"github.com/Team254/cheesy-arena/websocket"
-	"strconv"
 )
 
 type ArenaNotifiers struct {
@@ -55,26 +56,25 @@ func (arena *Arena) configureNotifiers() {
 		arena.generateDisplayConfigurationMessage)
 	arena.EventStatusNotifier = websocket.NewNotifier("eventStatus", arena.generateEventStatusMessage)
 	arena.LowerThirdNotifier = websocket.NewNotifier("lowerThird", arena.generateLowerThirdMessage)
-	arena.MatchLoadNotifier = websocket.NewNotifier("matchLoad", arena.generateMatchLoadMessage)
+	arena.MatchLoadNotifier = websocket.NewNotifier("matchLoad", arena.GenerateMatchLoadMessage)
 	arena.MatchTimeNotifier = websocket.NewNotifier("matchTime", arena.generateMatchTimeMessage)
 	arena.MatchTimingNotifier = websocket.NewNotifier("matchTiming", arena.generateMatchTimingMessage)
 	arena.PlaySoundNotifier = websocket.NewNotifier("playSound", nil)
 	arena.RealtimeScoreNotifier = websocket.NewNotifier("realtimeScore", arena.generateRealtimeScoreMessage)
 	arena.ReloadDisplaysNotifier = websocket.NewNotifier("reload", nil)
-	arena.ScorePostedNotifier = websocket.NewNotifier("scorePosted", arena.generateScorePostedMessage)
+	arena.ScorePostedNotifier = websocket.NewNotifier("scorePosted", arena.GenerateScorePostedMessage)
 	arena.ScoringStatusNotifier = websocket.NewNotifier("scoringStatus", arena.generateScoringStatusMessage)
-	arena.DevicesMonitoringNotifier = websocket.NewNotifier("devicesMonitoring", arena.generateDevicesMonitoringMessage)
 }
 
-func (arena *Arena) generateAllianceSelectionMessage() interface{} {
+func (arena *Arena) generateAllianceSelectionMessage() any {
 	return &arena.AllianceSelectionAlliances
 }
 
-func (arena *Arena) generateAllianceStationDisplayModeMessage() interface{} {
+func (arena *Arena) generateAllianceStationDisplayModeMessage() any {
 	return arena.AllianceStationDisplayMode
 }
 
-func (arena *Arena) generateArenaStatusMessage() interface{} {
+func (arena *Arena) generateArenaStatusMessage() any {
 	// Convert AP team wifi network status array to a map by station for ease of client use.
 	teamWifiStatuses := make(map[string]network.TeamWifiStatus)
 	for i, station := range []string{"R1", "R2", "R3", "B1", "B2", "B3"} {
@@ -95,15 +95,15 @@ func (arena *Arena) generateArenaStatusMessage() interface{} {
 		FieldEstop            bool
 		PlcArmorBlockStatuses map[string]bool
 	}{arena.CurrentMatch.Id, arena.AllianceStations, teamWifiStatuses, arena.MatchState,
-		arena.checkCanStartMatch() == nil, arena.Plc.IsHealthy, arena.Plc.GetFieldEstop(),
+		arena.checkCanStartMatch() == nil, arena.Plc.IsHealthy(), arena.Plc.GetFieldEstop(),
 		arena.Plc.GetArmorBlockStatuses()}
 }
 
-func (arena *Arena) generateAudienceDisplayModeMessage() interface{} {
+func (arena *Arena) generateAudienceDisplayModeMessage() any {
 	return arena.AudienceDisplayMode
 }
 
-func (arena *Arena) generateDisplayConfigurationMessage() interface{} {
+func (arena *Arena) generateDisplayConfigurationMessage() any {
 	// Notify() for this notifier must always called from a method that has a lock on the display mutex.
 	// Make a copy of the map to avoid potential data races; otherwise the same map would get iterated through as it is
 	// serialized to JSON, outside the mutex lock.
@@ -114,18 +114,18 @@ func (arena *Arena) generateDisplayConfigurationMessage() interface{} {
 	return displaysCopy
 }
 
-func (arena *Arena) generateEventStatusMessage() interface{} {
+func (arena *Arena) generateEventStatusMessage() any {
 	return arena.EventStatus
 }
 
-func (arena *Arena) generateLowerThirdMessage() interface{} {
+func (arena *Arena) generateLowerThirdMessage() any {
 	return &struct {
 		LowerThird     *model.LowerThird
 		ShowLowerThird bool
 	}{arena.LowerThird, arena.ShowLowerThird}
 }
 
-func (arena *Arena) generateMatchLoadMessage() interface{} {
+func (arena *Arena) GenerateMatchLoadMessage() any {
 	teams := make(map[string]*model.Team)
 	for station, allianceStation := range arena.AllianceStations {
 		teams[station] = allianceStation.Team
@@ -139,91 +139,166 @@ func (arena *Arena) generateMatchLoadMessage() interface{} {
 		}
 	}
 
+	matchResult, _ := arena.Database.GetMatchResultForMatch(arena.CurrentMatch.Id)
+	isReplay := matchResult != nil
+
+	var matchup *playoff.Matchup
+	redOffFieldTeams := []*model.Team{}
+	blueOffFieldTeams := []*model.Team{}
+	if arena.CurrentMatch.Type == model.Playoff {
+		matchGroup := arena.PlayoffTournament.MatchGroups()[arena.CurrentMatch.PlayoffMatchGroupId]
+		matchup, _ = matchGroup.(*playoff.Matchup)
+		redOffFieldTeamIds, blueOffFieldTeamIds, _ := arena.Database.GetOffFieldTeamIds(arena.CurrentMatch)
+		for _, teamId := range redOffFieldTeamIds {
+			team, _ := arena.Database.GetTeamById(teamId)
+			redOffFieldTeams = append(redOffFieldTeams, team)
+		}
+		for _, teamId := range blueOffFieldTeamIds {
+			team, _ := arena.Database.GetTeamById(teamId)
+			blueOffFieldTeams = append(blueOffFieldTeams, team)
+		}
+	}
+
 	return &struct {
-		MatchType string
-		Match     *model.Match
-		Teams     map[string]*model.Team
-		Rankings  map[string]*game.Ranking
-	}{arena.CurrentMatch.CapitalizedType(), arena.CurrentMatch, teams, rankings}
+		Match             *model.Match
+		AllowSubstitution bool
+		IsReplay          bool
+		Teams             map[string]*model.Team
+		Rankings          map[string]*game.Ranking
+		Matchup           *playoff.Matchup
+		RedOffFieldTeams  []*model.Team
+		BlueOffFieldTeams []*model.Team
+		BreakDescription  string
+	}{
+		arena.CurrentMatch,
+		arena.CurrentMatch.ShouldAllowSubstitution(),
+		isReplay,
+		teams,
+		rankings,
+		matchup,
+		redOffFieldTeams,
+		blueOffFieldTeams,
+		arena.breakDescription,
+	}
 }
 
-func (arena *Arena) generateMatchTimeMessage() interface{} {
+func (arena *Arena) generateMatchTimeMessage() any {
 	return MatchTimeMessage{arena.MatchState, int(arena.MatchTimeSec())}
 }
 
-func (arena *Arena) generateMatchTimingMessage() interface{} {
+func (arena *Arena) generateMatchTimingMessage() any {
 	return &game.MatchTiming
 }
 
-func (arena *Arena) generateRealtimeScoreMessage() interface{} {
+func (arena *Arena) generateRealtimeScoreMessage() any {
 	fields := struct {
-		Red  *audienceAllianceScoreFields
-		Blue *audienceAllianceScoreFields
+		Red       *audienceAllianceScoreFields
+		Blue      *audienceAllianceScoreFields
+		RedCards  map[string]string
+		BlueCards map[string]string
 		MatchState
-	}{}
-	fields.Red = getAudienceAllianceScoreFields(arena.RedRealtimeScore, arena.RedScoreSummary())
-	fields.Blue = getAudienceAllianceScoreFields(arena.BlueRealtimeScore, arena.BlueScoreSummary())
-	fields.MatchState = arena.MatchState
+	}{
+		getAudienceAllianceScoreFields(arena.RedRealtimeScore, arena.RedScoreSummary()),
+		getAudienceAllianceScoreFields(arena.BlueRealtimeScore, arena.BlueScoreSummary()),
+		arena.RedRealtimeScore.Cards,
+		arena.BlueRealtimeScore.Cards,
+		arena.MatchState,
+	}
 	return &fields
 }
 
-func (arena *Arena) generateScorePostedMessage() interface{} {
-	// For elimination matches, summarize the state of the series.
-	var seriesStatus, seriesLeader string
-	if arena.SavedMatch.Type == "elimination" {
-		matches, _ := arena.Database.GetMatchesByElimRoundGroup(arena.SavedMatch.ElimRound, arena.SavedMatch.ElimGroup)
-		var redWins, blueWins int
-		for _, match := range matches {
-			if match.Status == model.RedWonMatch {
-				redWins++
-			} else if match.Status == model.BlueWonMatch {
-				blueWins++
-			}
-		}
-
-		if redWins == 2 {
-			seriesStatus = fmt.Sprintf("Red Wins Series %d-%d", redWins, blueWins)
-			seriesLeader = "red"
-		} else if blueWins == 2 {
-			seriesStatus = fmt.Sprintf("Blue Wins Series %d-%d", blueWins, redWins)
-			seriesLeader = "blue"
-		} else if redWins > blueWins {
-			seriesStatus = fmt.Sprintf("Red Leads Series %d-%d", redWins, blueWins)
-			seriesLeader = "red"
-		} else if blueWins > redWins {
-			seriesStatus = fmt.Sprintf("Blue Leads Series %d-%d", blueWins, redWins)
-			seriesLeader = "blue"
-		} else {
-			seriesStatus = fmt.Sprintf("Series Tied %d-%d", redWins, blueWins)
-		}
+func (arena *Arena) GenerateScorePostedMessage() any {
+	redScoreSummary := arena.SavedMatchResult.RedScoreSummary()
+	blueScoreSummary := arena.SavedMatchResult.BlueScoreSummary()
+	redRankingPoints := redScoreSummary.BonusRankingPoints
+	blueRankingPoints := blueScoreSummary.BonusRankingPoints
+	switch arena.SavedMatch.Status {
+	case game.RedWonMatch:
+		redRankingPoints += 2
+	case game.BlueWonMatch:
+		blueRankingPoints += 2
+	case game.TieMatch:
+		redRankingPoints++
+		blueRankingPoints++
 	}
 
-	rankings := make(map[int]game.Ranking, len(arena.SavedRankings))
-	for _, ranking := range arena.SavedRankings {
-		rankings[ranking.TeamId] = ranking
+	// For playoff matches, summarize the state of the series.
+	var redWins, blueWins int
+	var redDestination, blueDestination string
+	redOffFieldTeamIds := []int{}
+	blueOffFieldTeamIds := []int{}
+	if arena.SavedMatch.Type == model.Playoff {
+		matchGroup := arena.PlayoffTournament.MatchGroups()[arena.SavedMatch.PlayoffMatchGroupId]
+		if matchup, ok := matchGroup.(*playoff.Matchup); ok {
+			redWins = matchup.RedAllianceWins
+			blueWins = matchup.BlueAllianceWins
+			redDestination = matchup.RedAllianceDestination()
+			blueDestination = matchup.BlueAllianceDestination()
+		}
+		redOffFieldTeamIds, blueOffFieldTeamIds, _ = arena.Database.GetOffFieldTeamIds(arena.SavedMatch)
+	}
+
+	redRankings := map[int]*game.Ranking{
+		arena.SavedMatch.Red1: nil, arena.SavedMatch.Red2: nil, arena.SavedMatch.Red3: nil,
+	}
+	blueRankings := map[int]*game.Ranking{
+		arena.SavedMatch.Blue1: nil, arena.SavedMatch.Blue2: nil, arena.SavedMatch.Blue3: nil,
+	}
+	for index, ranking := range arena.SavedRankings {
+		if _, ok := redRankings[ranking.TeamId]; ok {
+			redRankings[ranking.TeamId] = &arena.SavedRankings[index]
+		}
+		if _, ok := blueRankings[ranking.TeamId]; ok {
+			blueRankings[ranking.TeamId] = &arena.SavedRankings[index]
+		}
 	}
 
 	return &struct {
-		MatchType        string
-		Match            *model.Match
-		RedScoreSummary  *game.ScoreSummary
-		BlueScoreSummary *game.ScoreSummary
-		Rankings         map[int]game.Ranking
-		RedFouls         []game.Foul
-		BlueFouls        []game.Foul
-		RulesViolated    map[int]*game.Rule
-		RedCards         map[string]string
-		BlueCards        map[string]string
-		SeriesStatus     string
-		SeriesLeader     string
-	}{arena.SavedMatch.CapitalizedType(), arena.SavedMatch, arena.SavedMatchResult.RedScoreSummary(),
-		arena.SavedMatchResult.BlueScoreSummary(), rankings, arena.SavedMatchResult.RedScore.Fouls,
+		Match               *model.Match
+		RedScoreSummary     *game.ScoreSummary
+		BlueScoreSummary    *game.ScoreSummary
+		RedRankingPoints    int
+		BlueRankingPoints   int
+		RedFouls            []game.Foul
+		BlueFouls           []game.Foul
+		RulesViolated       map[int]*game.Rule
+		RedCards            map[string]string
+		BlueCards           map[string]string
+		RedRankings         map[int]*game.Ranking
+		BlueRankings        map[int]*game.Ranking
+		RedOffFieldTeamIds  []int
+		BlueOffFieldTeamIds []int
+		RedWon              bool
+		BlueWon             bool
+		RedWins             int
+		BlueWins            int
+		RedDestination      string
+		BlueDestination     string
+	}{
+		arena.SavedMatch,
+		redScoreSummary,
+		blueScoreSummary,
+		redRankingPoints,
+		blueRankingPoints,
+		arena.SavedMatchResult.RedScore.Fouls,
 		arena.SavedMatchResult.BlueScore.Fouls,
 		getRulesViolated(arena.SavedMatchResult.RedScore.Fouls, arena.SavedMatchResult.BlueScore.Fouls),
-		arena.SavedMatchResult.RedCards, arena.SavedMatchResult.BlueCards, seriesStatus, seriesLeader}
+		arena.SavedMatchResult.RedCards,
+		arena.SavedMatchResult.BlueCards,
+		redRankings,
+		blueRankings,
+		redOffFieldTeamIds,
+		blueOffFieldTeamIds,
+		arena.SavedMatch.Status == game.RedWonMatch,
+		arena.SavedMatch.Status == game.BlueWonMatch,
+		redWins,
+		blueWins,
+		redDestination,
+		blueDestination,
+	}
 }
 
-func (arena *Arena) generateScoringStatusMessage() interface{} {
+func (arena *Arena) generateScoringStatusMessage() any {
 	return &struct {
 		RefereeScoreReady         bool
 		RedScoreReady             bool
@@ -237,10 +312,6 @@ func (arena *Arena) generateScoringStatusMessage() interface{} {
 		arena.ScoringPanelRegistry.GetNumPanels("red"), arena.ScoringPanelRegistry.GetNumScoreCommitted("red"),
 		arena.ScoringPanelRegistry.GetNumPanels("blue"), arena.ScoringPanelRegistry.GetNumScoreCommitted("blue"),
 	}
-}
-
-func (arena *Arena) generateDevicesMonitoringMessage() interface{} {
-	return arena.DevicesMonitor.ListDevices()
 }
 
 // Constructs the data object for one alliance sent to the audience display for the realtime scoring overlay.

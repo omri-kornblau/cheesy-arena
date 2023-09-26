@@ -7,7 +7,6 @@ package web
 
 import (
 	"fmt"
-	"github.com/Team254/cheesy-arena/model"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -15,6 +14,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Team254/cheesy-arena/model"
 )
 
 // Shows the event settings editing page.
@@ -41,16 +42,36 @@ func (web *Web) settingsPostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	previousAdminPassword := eventSettings.AdminPassword
 
-	numAlliances, _ := strconv.Atoi(r.PostFormValue("numElimAlliances"))
-	if numAlliances < 2 || numAlliances > 16 {
-		web.renderSettings(w, r, "Number of alliances must be between 2 and 16.")
-		return
+	var playoffType model.PlayoffType
+	numAlliances := 0
+	if r.PostFormValue("playoffType") == "SingleEliminationPlayoff" {
+		playoffType = model.SingleEliminationPlayoff
+		numAlliances, _ = strconv.Atoi(r.PostFormValue("numPlayoffAlliances"))
+		if numAlliances < 2 || numAlliances > 16 {
+			web.renderSettings(w, r, "Number of alliances must be between 2 and 16.")
+			return
+		}
+	} else {
+		playoffType = model.DoubleEliminationPlayoff
+		numAlliances = 8
 	}
+	if eventSettings.PlayoffType != playoffType {
+		alliances, err := web.arena.Database.GetAllAlliances()
+		if err != nil {
+			handleWebErr(w, err)
+			return
+		}
+		if len(alliances) > 0 {
+			web.renderSettings(w, r, "Cannot change playoff type after alliance selection has been finalized.")
+			return
+		}
+	}
+	eventSettings.PlayoffType = playoffType
 
-	eventSettings.NumElimAlliances = numAlliances
+	eventSettings.NumPlayoffAlliances = numAlliances
 	eventSettings.SelectionRound2Order = r.PostFormValue("selectionRound2Order")
 	eventSettings.SelectionRound3Order = r.PostFormValue("selectionRound3Order")
-	eventSettings.TBADownloadEnabled = r.PostFormValue("TBADownloadEnabled") == "on"
+	eventSettings.TbaDownloadEnabled = r.PostFormValue("TbaDownloadEnabled") == "on"
 	eventSettings.TbaPublishingEnabled = r.PostFormValue("tbaPublishingEnabled") == "on"
 	eventSettings.TbaEventCode = r.PostFormValue("tbaEventCode")
 	eventSettings.TbaSecretId = r.PostFormValue("tbaSecretId")
@@ -60,8 +81,6 @@ func (web *Web) settingsPostHandler(w http.ResponseWriter, r *http.Request) {
 	eventSettings.ApUsername = r.PostFormValue("apUsername")
 	eventSettings.ApPassword = r.PostFormValue("apPassword")
 	eventSettings.ApTeamChannel, _ = strconv.Atoi(r.PostFormValue("apTeamChannel"))
-	eventSettings.ApAdminChannel, _ = strconv.Atoi(r.PostFormValue("apAdminChannel"))
-	eventSettings.ApAdminWpaKey = r.PostFormValue("apAdminWpaKey")
 	eventSettings.Ap2Address = r.PostFormValue("ap2Address")
 	eventSettings.Ap2Username = r.PostFormValue("ap2Username")
 	eventSettings.Ap2Password = r.PostFormValue("ap2Password")
@@ -75,13 +94,11 @@ func (web *Web) settingsPostHandler(w http.ResponseWriter, r *http.Request) {
 	eventSettings.PauseDurationSec, _ = strconv.Atoi(r.PostFormValue("pauseDurationSec"))
 	eventSettings.TeleopDurationSec, _ = strconv.Atoi(r.PostFormValue("teleopDurationSec"))
 	eventSettings.WarningRemainingDurationSec, _ = strconv.Atoi(r.PostFormValue("warningRemainingDurationSec"))
-	eventSettings.QuintetThreshold, _ = strconv.Atoi(r.PostFormValue("quintetThreshold"))
-	eventSettings.CargoBonusRankingPointThresholdWithoutQuintet, _ =
-		strconv.Atoi(r.PostFormValue("cargoBonusRankingPointThresholdWithoutQuintet"))
-	eventSettings.CargoBonusRankingPointThresholdWithQuintet, _ =
-		strconv.Atoi(r.PostFormValue("cargoBonusRankingPointThresholdWithQuintet"))
-	eventSettings.HangarBonusRankingPointThreshold, _ =
-		strconv.Atoi(r.PostFormValue("hangarBonusRankingPointThreshold"))
+	eventSettings.SustainabilityBonusLinkThresholdWithoutCoop, _ =
+		strconv.Atoi(r.PostFormValue("sustainabilityBonusLinkThresholdWithoutCoop"))
+	eventSettings.SustainabilityBonusLinkThresholdWithCoop, _ =
+		strconv.Atoi(r.PostFormValue("sustainabilityBonusLinkThresholdWithCoop"))
+	eventSettings.ActivationBonusPointThreshold, _ = strconv.Atoi(r.PostFormValue("activationBonusPointThreshold"))
 
 	if eventSettings.Ap2TeamChannel != 0 && eventSettings.Ap2TeamChannel == eventSettings.ApTeamChannel {
 		web.renderSettings(w, r, "Cannot use same channel for both access points.")
@@ -224,11 +241,124 @@ func (web *Web) clearDbHandler(w http.ResponseWriter, r *http.Request) {
 		handleWebErr(w, err)
 		return
 	}
-	err = web.arena.Database.TruncateAllianceTeams()
+	err = web.arena.Database.TruncateAlliances()
 	if err != nil {
 		handleWebErr(w, err)
 		return
 	}
+	err = web.arena.Database.TruncateScheduledBreaks()
+	if err != nil {
+		handleWebErr(w, err)
+		return
+	}
+	web.arena.AllianceSelectionAlliances = []model.Alliance{}
+	cachedRankedTeams = []*RankedTeam{}
+
+	http.Redirect(w, r, "/setup/settings", 303)
+}
+
+// Publishes the playoff alliances to the web.
+func (web *Web) settingsPublishAlliancesHandler(w http.ResponseWriter, r *http.Request) {
+	if !web.userIsAdmin(w, r) {
+		return
+	}
+
+	if web.arena.EventSettings.TbaPublishingEnabled {
+		err := web.arena.TbaClient.PublishAlliances(web.arena.Database)
+		if err != nil {
+			http.Error(w, "Failed to publish alliances: "+err.Error(), 500)
+			return
+		}
+	} else {
+		http.Error(w, "TBA publishing is not enabled", 500)
+		return
+	}
+
+	http.Redirect(w, r, "/setup/settings", 303)
+}
+
+// Publishes the awards to the web.
+func (web *Web) settingsPublishAwardsHandler(w http.ResponseWriter, r *http.Request) {
+	if !web.userIsAdmin(w, r) {
+		return
+	}
+
+	if web.arena.EventSettings.TbaPublishingEnabled {
+		err := web.arena.TbaClient.PublishAwards(web.arena.Database)
+		if err != nil {
+			http.Error(w, "Failed to publish awards: "+err.Error(), 500)
+			return
+		}
+	} else {
+		http.Error(w, "TBA publishing is not enabled", 500)
+		return
+	}
+
+	http.Redirect(w, r, "/setup/settings", 303)
+}
+
+// Publishes the match schedule and results to the web.
+func (web *Web) settingsPublishMatchesHandler(w http.ResponseWriter, r *http.Request) {
+	if !web.userIsAdmin(w, r) {
+		return
+	}
+
+	if web.arena.EventSettings.TbaPublishingEnabled {
+		err := web.arena.TbaClient.DeletePublishedMatches()
+		if err != nil {
+			http.Error(w, "Failed to delete published matches: "+err.Error(), 500)
+			return
+		}
+		err = web.arena.TbaClient.PublishMatches(web.arena.Database)
+		if err != nil {
+			http.Error(w, "Failed to publish matches: "+err.Error(), 500)
+			return
+		}
+	} else {
+		http.Error(w, "TBA publishing is not enabled", 500)
+		return
+	}
+
+	http.Redirect(w, r, "/setup/settings", 303)
+}
+
+// Publishes the standings to the web.
+func (web *Web) settingsPublishRankingsHandler(w http.ResponseWriter, r *http.Request) {
+	if !web.userIsAdmin(w, r) {
+		return
+	}
+
+	if web.arena.EventSettings.TbaPublishingEnabled {
+		err := web.arena.TbaClient.PublishRankings(web.arena.Database)
+		if err != nil {
+			http.Error(w, "Failed to publish rankings: "+err.Error(), 500)
+			return
+		}
+	} else {
+		http.Error(w, "TBA publishing is not enabled", 500)
+		return
+	}
+
+	http.Redirect(w, r, "/setup/settings", 303)
+}
+
+// Publishes the team list to the web.
+func (web *Web) settingsPublishTeamsHandler(w http.ResponseWriter, r *http.Request) {
+	if !web.userIsAdmin(w, r) {
+		return
+	}
+
+	if web.arena.EventSettings.TbaPublishingEnabled {
+		err := web.arena.TbaClient.PublishTeams(web.arena.Database)
+		if err != nil {
+			http.Error(w, "Failed to publish teams: "+err.Error(), 500)
+			return
+		}
+	} else {
+		http.Error(w, "TBA publishing is not enabled", 500)
+		return
+	}
+
 	http.Redirect(w, r, "/setup/settings", 303)
 }
 

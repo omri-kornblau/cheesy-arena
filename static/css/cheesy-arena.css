@@ -80,6 +80,9 @@
 .label-scoring[data-ready=true] {
   background-color: #0c6;
 }
+.label-saved-match {
+  background-color: #999;
+}
 .nowrap {
   white-space: nowrap;
 }
@@ -102,9 +105,31 @@ td[data-plc-value="true"] {
   color: #090;
 }
 .btn-game-sound {
-  width: 110px;
+  width: 160px;
   text-align: left;
 }
 input[data-changed="true"], select[data-changed="true"] {
   border: 2px solid #f00;
+}
+.status-well {
+  margin-bottom: 10px;
+}
+#buttonBottomRow {
+  margin-top: 5px;
+  margin-bottom: 10px;
+}
+.match-list {
+  height: 610px;
+  overflow-y: auto;
+}
+.match-list table {
+  border-collapse: separate;
+}
+.match-list th {
+  position: sticky;
+  top: 0;
+  background-color: #fff;
+}
+#testMatchSettings {
+  display: none;
 }

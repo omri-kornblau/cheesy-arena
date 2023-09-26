@@ -131,7 +131,7 @@ func TestSetupTeamsDisallowModification(t *testing.T) {
 	web := setupTestWeb(t)
 
 	web.arena.Database.CreateTeam(&model.Team{Id: 254, Nickname: "The Cheesy Poofs"})
-	web.arena.Database.CreateMatch(&model.Match{Type: "qualification"})
+	web.arena.Database.CreateMatch(&model.Match{Type: model.Qualification})
 
 	// Disallow adding teams.
 	recorder := web.postHttpResponse("/setup/teams", "teamNumbers=33")
@@ -204,15 +204,4 @@ func TestSetupTeamsWpaKeys(t *testing.T) {
 	recorder = web.postHttpResponse("/setup/teams/254/edit", "wpa_key=1234567")
 	assert.Equal(t, 500, recorder.Code)
 	assert.Contains(t, recorder.Body.String(), "WPA key must be between 8 and 63 characters")
-}
-
-func TestSetupTeamsPublish(t *testing.T) {
-	web := setupTestWeb(t)
-
-	web.arena.TbaClient.BaseUrl = "fakeurl"
-	web.arena.EventSettings.TbaPublishingEnabled = true
-
-	recorder := web.postHttpResponse("/setup/teams/publish", "")
-	assert.Equal(t, 500, recorder.Code)
-	assert.Contains(t, recorder.Body.String(), "Failed to publish teams")
 }

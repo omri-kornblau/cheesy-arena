@@ -13,6 +13,8 @@ import (
 	"fmt"
 	"github.com/Team254/cheesy-arena/game"
 	"github.com/Team254/cheesy-arena/model"
+	"github.com/mitchellh/mapstructure"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -33,13 +35,14 @@ type TbaClient struct {
 }
 
 type TbaMatch struct {
-	CompLevel      string                        `json:"comp_level"`
-	SetNumber      int                           `json:"set_number"`
-	MatchNumber    int                           `json:"match_number"`
-	Alliances      map[string]*TbaAlliance       `json:"alliances"`
-	ScoreBreakdown map[string]*TbaScoreBreakdown `json:"score_breakdown"`
-	TimeString     string                        `json:"time_string"`
-	TimeUtc        string                        `json:"time_utc"`
+	CompLevel      string                    `json:"comp_level"`
+	SetNumber      int                       `json:"set_number"`
+	MatchNumber    int                       `json:"match_number"`
+	Alliances      map[string]*TbaAlliance   `json:"alliances"`
+	ScoreBreakdown map[string]map[string]any `json:"score_breakdown"`
+	TimeString     string                    `json:"time_string"`
+	TimeUtc        string                    `json:"time_utc"`
+	DisplayName    string                    `json:"display_name"`
 }
 
 type TbaAlliance struct {
@@ -50,57 +53,56 @@ type TbaAlliance struct {
 }
 
 type TbaScoreBreakdown struct {
-	TaxiRobot1              string `json:"taxiRobot1"`
-	TaxiRobot2              string `json:"taxiRobot2"`
-	TaxiRobot3              string `json:"taxiRobot3"`
-	AutoCargoLowerBlue      int    `json:"autoCargoLowerBlue"`
-	AutoCargoLowerFar       int    `json:"autoCargoLowerFar"`
-	AutoCargoLowerNear      int    `json:"autoCargoLowerNear"`
-	AutoCargoLowerRed       int    `json:"autoCargoLowerRed"`
-	AutoCargoUpperBlue      int    `json:"autoCargoUpperBlue"`
-	AutoCargoUpperFar       int    `json:"autoCargoUpperFar"`
-	AutoCargoUpperNear      int    `json:"autoCargoUpperNear"`
-	AutoCargoUpperRed       int    `json:"autoCargoUpperRed"`
-	AutoCargoTotal          int    `json:"autoCargoTotal"`
-	TeleopCargoLowerBlue    int    `json:"teleopCargoLowerBlue"`
-	TeleopCargoLowerFar     int    `json:"teleopCargoLowerFar"`
-	TeleopCargoLowerNear    int    `json:"teleopCargoLowerNear"`
-	TeleopCargoLowerRed     int    `json:"teleopCargoLowerRed"`
-	TeleopCargoUpperBlue    int    `json:"teleopCargoUpperBlue"`
-	TeleopCargoUpperFar     int    `json:"teleopCargoUpperFar"`
-	TeleopCargoUpperNear    int    `json:"teleopCargoUpperNear"`
-	TeleopCargoUpperRed     int    `json:"teleopCargoUpperRed"`
-	TeleopCargoTotal        int    `json:"teleopCargoTotal"`
-	MatchCargoTotal         int    `json:"matchCargoTotal"`
-	EndgameRobot1           string `json:"endgameRobot1"`
-	EndgameRobot2           string `json:"endgameRobot2"`
-	EndgameRobot3           string `json:"endgameRobot3"`
-	AutoTaxiPoints          int    `json:"autoTaxiPoints"`
-	AutoCargoPoints         int    `json:"autoCargoPoints"`
-	AutoPoints              int    `json:"autoPoints"`
-	TeleopCargoPoints       int    `json:"teleopCargoPoints"`
-	EndgamePoints           int    `json:"endgamePoints"`
-	TeleopPoints            int    `json:"teleopPoints"`
-	QuintetAchieved         bool   `json:"quintetAchieved"`
-	CargoBonusRankingPoint  bool   `json:"cargoBonusRankingPoint"`
-	HangarBonusRankingPoint bool   `json:"hangarBonusRankingPoint"`
-	FoulCount               int    `json:"foulCount"`
-	TechFoulCount           int    `json:"techFoulCount"`
-	FoulPoints              int    `json:"foulPoints"`
-	TotalPoints             int    `json:"totalPoints"`
-	RP                      int    `json:"rp"`
+	MobilityRobot1              string               `mapstructure:"mobilityRobot1"`
+	MobilityRobot2              string               `mapstructure:"mobilityRobot2"`
+	MobilityRobot3              string               `mapstructure:"mobilityRobot3"`
+	AutoMobilityPoints          int                  `mapstructure:"autoMobilityPoints"`
+	AutoChargeStationRobot1     string               `mapstructure:"autoChargeStationRobot1"`
+	AutoChargeStationRobot2     string               `mapstructure:"autoChargeStationRobot2"`
+	AutoChargeStationRobot3     string               `mapstructure:"autoChargeStationRobot3"`
+	AutoBridgeState             string               `mapstructure:"autoBridgeState"`
+	AutoCommunity               map[string][9]string `mapstructure:"autoCommunity"`
+	AutoGamePieceCount          int                  `mapstructure:"autoGamePieceCount"`
+	AutoGamePiecePoints         int                  `mapstructure:"autoGamePiecePoints"`
+	AutoPoints                  int                  `mapstructure:"autoPoints"`
+	TeleopCommunity             map[string][9]string `mapstructure:"teleopCommunity"`
+	TeleopGamePieceCount        int                  `mapstructure:"teleopGamePieceCount"`
+	TeleopGamePiecePoints       int                  `mapstructure:"teleopGamePiecePoints"`
+	Links                       []TbaLink            `mapstructure:"links"`
+	LinkPoints                  int                  `mapstructure:"linkPoints"`
+	ExtraGamePieceCount         int                  `mapstructure:"extraGamePieceCount"`
+	EndGameChargeStationRobot1  string               `mapstructure:"endGameChargeStationRobot1"`
+	EndGameChargeStationRobot2  string               `mapstructure:"endGameChargeStationRobot2"`
+	EndGameChargeStationRobot3  string               `mapstructure:"endGameChargeStationRobot3"`
+	EndGameBridgeState          string               `mapstructure:"endGameBridgeState"`
+	TeleopPoints                int                  `mapstructure:"teleopPoints"`
+	CoopertitionCriteriaMet     bool                 `mapstructure:"coopertitionCriteriaMet"`
+	SustainabilityBonusAchieved bool                 `mapstructure:"sustainabilityBonusAchieved"`
+	ActivationBonusAchieved     bool                 `mapstructure:"activationBonusAchieved"`
+	FoulCount                   int                  `mapstructure:"foulCount"`
+	TechFoulCount               int                  `mapstructure:"techFoulCount"`
+	FoulPoints                  int                  `mapstructure:"foulPoints"`
+	TotalPoints                 int                  `mapstructure:"totalPoints"`
+	RP                          int                  `mapstructure:"rp"`
+}
+
+type TbaLink struct {
+	Nodes [3]int `json:"nodes"`
+	Row   string `json:"row"`
 }
 
 type TbaRanking struct {
-	TeamKey          string `json:"team_key"`
-	Rank             int    `json:"rank"`
-	RP               float32
-	Match            int
-	Hangar           int
-	TaxiAndAutoCargo int
-	WinLossTie       string
-	Dqs              int `json:"dqs"`
-	Played           int `json:"played"`
+	TeamKey       string `json:"team_key"`
+	Rank          int    `json:"rank"`
+	RP            float32
+	Match         float32
+	ChargeStation float32
+	Auto          float32
+	Wins          int `json:"wins"`
+	Losses        int `json:"losses"`
+	Ties          int `json:"ties"`
+	Dqs           int `json:"dqs"`
+	Played        int `json:"played"`
 }
 
 type TbaRankings struct {
@@ -135,8 +137,8 @@ type TbaEvent struct {
 }
 
 type TbaMediaItem struct {
-	Details map[string]interface{} `json:"details"`
-	Type    string                 `json:"type"`
+	Details map[string]any `json:"details"`
+	Type    string         `json:"type"`
 }
 
 type TbaPublishedAward struct {
@@ -145,8 +147,15 @@ type TbaPublishedAward struct {
 	Awardee string `json:"awardee"`
 }
 
-var taxiMapping = map[bool]string{false: "No", true: "Yes"}
-var endgameMapping = []string{"None", "Low", "Mid", "High", "Traversal"}
+var mobilityMapping = map[bool]string{false: "No", true: "Yes"}
+var autoChargeStationMapping = map[bool]string{false: "None", true: "Docked"}
+var endGameChargeStationMapping = map[game.EndgameStatus]string{
+	game.EndgameNone:   "None",
+	game.EndgameParked: "Park",
+	game.EndgameDocked: "Docked",
+}
+var chargeStationLevelMapping = map[bool]string{false: "NotLevel", true: "Level"}
+var gridRowMapping = map[int]string{0: "Bottom", 1: "Mid", 2: "Top"}
 
 func NewTbaClient(eventCode, secretId, secret string) *TbaClient {
 	return &TbaClient{BaseUrl: tbaBaseUrl, eventCode: eventCode, secretId: secretId, secret: secret,
@@ -162,7 +171,7 @@ func (client *TbaClient) GetTeam(teamNumber int) (*TbaTeam, error) {
 
 	// Get the response and handle errors
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +191,7 @@ func (client *TbaClient) GetRobotName(teamNumber int, year int) (string, error) 
 
 	// Get the response and handle errors
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
@@ -209,7 +218,7 @@ func (client *TbaClient) GetTeamAwards(teamNumber int) ([]*TbaAward, error) {
 
 	// Get the response and handle errors
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -242,7 +251,7 @@ func (client *TbaClient) DownloadTeamAvatar(teamNumber, year int) error {
 
 	// Get the response and handle errors
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
@@ -297,31 +306,33 @@ func (client *TbaClient) PublishTeams(database *model.Database) error {
 	}
 	if resp.StatusCode != 200 {
 		defer resp.Body.Close()
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("Got status code %d from TBA: %s", resp.StatusCode, body)
 	}
 	return nil
 }
 
-// Uploads the qualification and elimination match schedule and results to The Blue Alliance.
+// Uploads the qualification and playoff match schedule and results to The Blue Alliance.
 func (client *TbaClient) PublishMatches(database *model.Database) error {
-	qualMatches, err := database.GetMatchesByType("qualification")
+	qualMatches, err := database.GetMatchesByType(model.Qualification, false)
 	if err != nil {
 		return err
 	}
-	elimMatches, err := database.GetMatchesByType("elimination")
+	playoffMatches, err := database.GetMatchesByType(model.Playoff, false)
 	if err != nil {
 		return err
 	}
-	matches := append(qualMatches, elimMatches...)
+	eventSettings, err := database.GetEventSettings()
+	if err != nil {
+		return err
+	}
+	matches := append(qualMatches, playoffMatches...)
 	tbaMatches := make([]TbaMatch, len(matches))
 
 	// Build a JSON array of TBA-format matches.
 	for i, match := range matches {
-		matchNumber, _ := strconv.Atoi(match.DisplayName)
-
 		// Fill in scores if the match has been played.
-		var scoreBreakdown map[string]*TbaScoreBreakdown
+		var scoreBreakdown map[string]map[string]any
 		var redScore, blueScore *int
 		var redCards, blueCards map[string]string
 		if match.IsComplete() {
@@ -330,11 +341,13 @@ func (client *TbaClient) PublishMatches(database *model.Database) error {
 				return err
 			}
 			if matchResult != nil {
-				scoreBreakdown = make(map[string]*TbaScoreBreakdown)
-				scoreBreakdown["red"] = createTbaScoringBreakdown(&match, matchResult, "red")
-				scoreBreakdown["blue"] = createTbaScoringBreakdown(&match, matchResult, "blue")
-				redScore = &scoreBreakdown["red"].TotalPoints
-				blueScore = &scoreBreakdown["blue"].TotalPoints
+				scoreBreakdown = make(map[string]map[string]any)
+				scoreBreakdown["red"] = createTbaScoringBreakdown(eventSettings, &match, matchResult, "red")
+				scoreBreakdown["blue"] = createTbaScoringBreakdown(eventSettings, &match, matchResult, "blue")
+				redScoreValue := scoreBreakdown["red"]["totalPoints"].(int)
+				blueScoreValue, _ := scoreBreakdown["blue"]["totalPoints"].(int)
+				redScore = &redScoreValue
+				blueScore = &blueScoreValue
 				redCards = matchResult.RedCards
 				blueCards = matchResult.BlueCards
 			}
@@ -345,12 +358,14 @@ func (client *TbaClient) PublishMatches(database *model.Database) error {
 		alliances["blue"] = createTbaAlliance([3]int{match.Blue1, match.Blue2, match.Blue3},
 			[3]bool{match.Blue1IsSurrogate, match.Blue2IsSurrogate, match.Blue3IsSurrogate}, blueScore, blueCards)
 
-		tbaMatches[i] = TbaMatch{"qm", 0, matchNumber, alliances, scoreBreakdown, match.Time.Local().Format("3:04 PM"),
-			match.Time.UTC().Format("2006-01-02T15:04:05")}
-		if match.Type == "elimination" {
-			tbaMatches[i].CompLevel = map[int]string{1: "f", 2: "sf", 4: "qf", 8: "ef"}[match.ElimRound]
-			tbaMatches[i].SetNumber = match.ElimGroup
-			tbaMatches[i].MatchNumber = match.ElimInstance
+		tbaMatches[i] = TbaMatch{
+			CompLevel:      match.TbaMatchKey.CompLevel,
+			SetNumber:      match.TbaMatchKey.SetNumber,
+			MatchNumber:    match.TbaMatchKey.MatchNumber,
+			Alliances:      alliances,
+			ScoreBreakdown: scoreBreakdown,
+			TimeString:     match.Time.Local().Format("3:04 PM"),
+			TimeUtc:        match.Time.UTC().Format("2006-01-02T15:04:05"),
 		}
 	}
 	jsonBody, err := json.Marshal(tbaMatches)
@@ -364,7 +379,7 @@ func (client *TbaClient) PublishMatches(database *model.Database) error {
 	}
 	if resp.StatusCode != 200 {
 		defer resp.Body.Close()
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("Got status code %d from TBA: %s", resp.StatusCode, body)
 	}
 	return nil
@@ -378,19 +393,21 @@ func (client *TbaClient) PublishRankings(database *model.Database) error {
 	}
 
 	// Build a JSON object of TBA-format rankings.
-	breakdowns := []string{"RP", "Match", "Hangar", "Auto", "WinLossTie"}
+	breakdowns := []string{"RP", "Match", "ChargeStation", "Auto"}
 	tbaRankings := make([]TbaRanking, len(rankings))
 	for i, ranking := range rankings {
 		tbaRankings[i] = TbaRanking{
-			getTbaTeam(ranking.TeamId),
-			ranking.Rank,
-			float32(ranking.RankingPoints) / float32(ranking.Played),
-			ranking.MatchPoints,
-			ranking.HangarPoints,
-			ranking.TaxiAndAutoCargoPoints,
-			fmt.Sprintf("%d-%d-%d", ranking.Wins, ranking.Losses, ranking.Ties),
-			ranking.Disqualifications,
-			ranking.Played,
+			TeamKey:       getTbaTeam(ranking.TeamId),
+			Rank:          ranking.Rank,
+			RP:            float32(ranking.RankingPoints) / float32(ranking.Played),
+			Match:         float32(ranking.MatchPoints) / float32(ranking.Played),
+			ChargeStation: float32(ranking.ChargeStationPoints) / float32(ranking.Played),
+			Auto:          float32(ranking.AutoPoints) / float32(ranking.Played),
+			Wins:          ranking.Wins,
+			Losses:        ranking.Losses,
+			Ties:          ranking.Ties,
+			Dqs:           ranking.Disqualifications,
+			Played:        ranking.Played,
 		}
 	}
 	jsonBody, err := json.Marshal(TbaRankings{breakdowns, tbaRankings})
@@ -404,7 +421,7 @@ func (client *TbaClient) PublishRankings(database *model.Database) error {
 	}
 	if resp.StatusCode != 200 {
 		defer resp.Body.Close()
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("Got status code %d from TBA: %s", resp.StatusCode, body)
 	}
 	return nil
@@ -420,8 +437,8 @@ func (client *TbaClient) PublishAlliances(database *model.Database) error {
 	// Build a JSON object of TBA-format alliances.
 	tbaAlliances := make([][]string, len(alliances))
 	for i, alliance := range alliances {
-		for _, team := range alliance {
-			tbaAlliances[i] = append(tbaAlliances[i], getTbaTeam(team.TeamId))
+		for _, allianceTeamId := range alliance.TeamIds {
+			tbaAlliances[i] = append(tbaAlliances[i], getTbaTeam(allianceTeamId))
 		}
 	}
 	jsonBody, err := json.Marshal(tbaAlliances)
@@ -435,7 +452,38 @@ func (client *TbaClient) PublishAlliances(database *model.Database) error {
 	}
 	if resp.StatusCode != 200 {
 		defer resp.Body.Close()
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("Got status code %d from TBA: %s", resp.StatusCode, body)
+	}
+	return nil
+}
+
+// Uploads the awards to The Blue Alliance.
+func (client *TbaClient) PublishAwards(database *model.Database) error {
+	awards, err := database.GetAllAwards()
+	if err != nil {
+		return err
+	}
+
+	// Build a JSON array of TBA-format award models.
+	tbaAwards := make([]TbaPublishedAward, len(awards))
+	for i, award := range awards {
+		tbaAwards[i].Name = award.AwardName
+		tbaAwards[i].TeamKey = getTbaTeam(award.TeamId)
+		tbaAwards[i].Awardee = award.PersonName
+	}
+	jsonBody, err := json.Marshal(tbaAwards)
+	if err != nil {
+		return err
+	}
+
+	resp, err := client.postRequest("awards", "update", jsonBody)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != 200 {
+		defer resp.Body.Close()
+		body, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("Got status code %d from TBA: %s", resp.StatusCode, body)
 	}
 	return nil
@@ -449,7 +497,7 @@ func (client *TbaClient) DeletePublishedMatches() error {
 	}
 	if resp.StatusCode != 200 {
 		defer resp.Body.Close()
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("Got status code %d from TBA: %s", resp.StatusCode, body)
 	}
 	return nil
@@ -464,7 +512,7 @@ func (client *TbaClient) getEventName(eventCode string) (string, error) {
 
 	// Get the response and handle errors
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
@@ -513,8 +561,11 @@ func (client *TbaClient) postRequest(resource string, action string, body []byte
 }
 
 func createTbaAlliance(teamIds [3]int, surrogates [3]bool, score *int, cards map[string]string) *TbaAlliance {
-	alliance := TbaAlliance{Surrogates: []string{}, Dqs: []string{}, Score: score}
+	alliance := TbaAlliance{Teams: []string{}, Surrogates: []string{}, Dqs: []string{}, Score: score}
 	for i, teamId := range teamIds {
+		if teamId == 0 {
+			continue
+		}
 		teamKey := getTbaTeam(teamId)
 		alliance.Teams = append(alliance.Teams, teamKey)
 		if surrogates[i] {
@@ -530,7 +581,12 @@ func createTbaAlliance(teamIds [3]int, surrogates [3]bool, score *int, cards map
 	return &alliance
 }
 
-func createTbaScoringBreakdown(match *model.Match, matchResult *model.MatchResult, alliance string) *TbaScoreBreakdown {
+func createTbaScoringBreakdown(
+	eventSettings *model.EventSettings,
+	match *model.Match,
+	matchResult *model.MatchResult,
+	alliance string,
+) map[string]any {
 	var breakdown TbaScoreBreakdown
 	var score *game.Score
 	var scoreSummary, opponentScoreSummary *game.ScoreSummary
@@ -544,48 +600,56 @@ func createTbaScoringBreakdown(match *model.Match, matchResult *model.MatchResul
 		opponentScoreSummary = matchResult.RedScoreSummary()
 	}
 
-	breakdown.TaxiRobot1 = taxiMapping[score.TaxiStatuses[0]]
-	breakdown.TaxiRobot2 = taxiMapping[score.TaxiStatuses[1]]
-	breakdown.TaxiRobot3 = taxiMapping[score.TaxiStatuses[2]]
-	breakdown.AutoCargoLowerBlue = score.AutoCargoLower[game.BlueQuadrant]
-	breakdown.AutoCargoLowerFar = score.AutoCargoLower[game.FarQuadrant]
-	breakdown.AutoCargoLowerNear = score.AutoCargoLower[game.NearQuadrant]
-	breakdown.AutoCargoLowerRed = score.AutoCargoLower[game.RedQuadrant]
-	breakdown.AutoCargoUpperBlue = score.AutoCargoUpper[game.BlueQuadrant]
-	breakdown.AutoCargoUpperFar = score.AutoCargoUpper[game.FarQuadrant]
-	breakdown.AutoCargoUpperNear = score.AutoCargoUpper[game.NearQuadrant]
-	breakdown.AutoCargoUpperRed = score.AutoCargoUpper[game.RedQuadrant]
-	breakdown.AutoCargoTotal = scoreSummary.AutoCargoCount
-	breakdown.TeleopCargoLowerBlue = score.TeleopCargoLower[game.BlueQuadrant]
-	breakdown.TeleopCargoLowerFar = score.TeleopCargoLower[game.FarQuadrant]
-	breakdown.TeleopCargoLowerNear = score.TeleopCargoLower[game.NearQuadrant]
-	breakdown.TeleopCargoLowerRed = score.TeleopCargoLower[game.RedQuadrant]
-	breakdown.TeleopCargoUpperBlue = score.TeleopCargoUpper[game.BlueQuadrant]
-	breakdown.TeleopCargoUpperFar = score.TeleopCargoUpper[game.FarQuadrant]
-	breakdown.TeleopCargoUpperNear = score.TeleopCargoUpper[game.NearQuadrant]
-	breakdown.TeleopCargoUpperRed = score.TeleopCargoUpper[game.RedQuadrant]
-	breakdown.TeleopCargoTotal = scoreSummary.CargoCount - scoreSummary.AutoCargoCount
-	breakdown.MatchCargoTotal = scoreSummary.CargoCount
-	breakdown.EndgameRobot1 = endgameMapping[score.EndgameStatuses[0]]
-	breakdown.EndgameRobot2 = endgameMapping[score.EndgameStatuses[1]]
-	breakdown.EndgameRobot3 = endgameMapping[score.EndgameStatuses[2]]
-	breakdown.AutoTaxiPoints = scoreSummary.TaxiPoints
-	breakdown.AutoCargoPoints = scoreSummary.AutoCargoPoints
-	breakdown.AutoPoints = scoreSummary.TaxiPoints + scoreSummary.AutoCargoPoints
-	breakdown.TeleopCargoPoints = scoreSummary.CargoPoints - scoreSummary.AutoCargoPoints
-	breakdown.EndgamePoints = scoreSummary.HangarPoints
-	breakdown.TeleopPoints = scoreSummary.CargoPoints - scoreSummary.AutoCargoPoints +
-		scoreSummary.HangarPoints
-	breakdown.QuintetAchieved = scoreSummary.QuintetAchieved
-	breakdown.CargoBonusRankingPoint = scoreSummary.CargoBonusRankingPoint
-	breakdown.HangarBonusRankingPoint = scoreSummary.HangarBonusRankingPoint
-	for _, foul := range score.Fouls {
-		if foul.Rule() != nil && !foul.Rule().IsRankingPoint {
-			if foul.Rule().IsTechnical {
-				breakdown.TechFoulCount++
-			} else {
-				breakdown.FoulCount++
+	breakdown.MobilityRobot1 = mobilityMapping[score.MobilityStatuses[0]]
+	breakdown.MobilityRobot2 = mobilityMapping[score.MobilityStatuses[1]]
+	breakdown.MobilityRobot3 = mobilityMapping[score.MobilityStatuses[2]]
+	breakdown.AutoMobilityPoints = scoreSummary.MobilityPoints
+	breakdown.AutoChargeStationRobot1 = autoChargeStationMapping[score.AutoDockStatuses[0]]
+	breakdown.AutoChargeStationRobot2 = autoChargeStationMapping[score.AutoDockStatuses[1]]
+	breakdown.AutoChargeStationRobot3 = autoChargeStationMapping[score.AutoDockStatuses[2]]
+	breakdown.AutoBridgeState = chargeStationLevelMapping[score.AutoChargeStationLevel]
+	breakdown.AutoCommunity = make(map[string][9]string)
+	breakdown.TeleopCommunity = make(map[string][9]string)
+	for rowIndex, rowName := range gridRowMapping {
+		shortRowName := string([]rune(rowName)[0])
+		breakdown.AutoCommunity[shortRowName] = createTbaGridRow(&score.Grid, rowIndex, true)
+		breakdown.TeleopCommunity[shortRowName] = createTbaGridRow(&score.Grid, rowIndex, false)
+	}
+	for i := 0; i < 3; i++ {
+		for j := 0; j < 9; j++ {
+			if score.Grid.Nodes[i][j] != game.Empty {
+				if score.Grid.AutoScoring[i][j] {
+					breakdown.AutoGamePieceCount++
+				}
+				breakdown.TeleopGamePieceCount++
 			}
+		}
+	}
+	for _, link := range score.Grid.Links() {
+		tbaLink := TbaLink{
+			Nodes: [3]int{link.StartColumn, link.StartColumn + 1, link.StartColumn + 2},
+			Row:   gridRowMapping[int(link.Row)],
+		}
+		breakdown.Links = append(breakdown.Links, tbaLink)
+	}
+	breakdown.LinkPoints = score.Grid.LinkPoints()
+	breakdown.AutoGamePiecePoints = score.Grid.AutoGamePiecePoints()
+	breakdown.TeleopGamePiecePoints = score.Grid.TeleopGamePiecePoints() + score.Grid.SuperchargedPoints()
+	breakdown.AutoPoints = scoreSummary.AutoPoints
+	breakdown.ExtraGamePieceCount = score.Grid.NumSuperchargedNodes()
+	breakdown.EndGameChargeStationRobot1 = endGameChargeStationMapping[score.EndgameStatuses[0]]
+	breakdown.EndGameChargeStationRobot2 = endGameChargeStationMapping[score.EndgameStatuses[1]]
+	breakdown.EndGameChargeStationRobot3 = endGameChargeStationMapping[score.EndgameStatuses[2]]
+	breakdown.EndGameBridgeState = chargeStationLevelMapping[score.EndgameChargeStationLevel]
+	breakdown.TeleopPoints = breakdown.TeleopGamePiecePoints + scoreSummary.EndgamePoints
+	breakdown.CoopertitionCriteriaMet = score.Grid.IsCoopertitionThresholdAchieved()
+	breakdown.SustainabilityBonusAchieved = scoreSummary.SustainabilityBonusRankingPoint
+	breakdown.ActivationBonusAchieved = scoreSummary.ActivationBonusRankingPoint
+	for _, foul := range score.Fouls {
+		if foul.IsTechnical {
+			breakdown.TechFoulCount++
+		} else {
+			breakdown.FoulCount++
 		}
 	}
 	breakdown.FoulPoints = scoreSummary.FoulPoints
@@ -598,36 +662,35 @@ func createTbaScoringBreakdown(match *model.Match, matchResult *model.MatchResul
 		breakdown.RP = ranking.RankingPoints
 	}
 
-	return &breakdown
+	// Turn the breakdown struct into a map in order to be able to remove any fields that are disabled based on the
+	// event settings.
+	breakdownMap := make(map[string]any)
+	_ = mapstructure.Decode(breakdown, &breakdownMap)
+	if eventSettings.SustainabilityBonusLinkThresholdWithCoop == 0 {
+		delete(breakdownMap, "coopertitionCriteriaMet")
+	}
+
+	return breakdownMap
 }
 
-// Uploads the awards to The Blue Alliance.
-func (client *TbaClient) PublishAwards(database *model.Database) error {
-	awards, err := database.GetAllAwards()
-	if err != nil {
-		return err
+func createTbaGridRow(grid *game.Grid, row int, isAuto bool) [9]string {
+	var gridRow [9]string
+	for column := 0; column < 9; column++ {
+		gridRow[column] = createTbaGridNode(grid, row, column, isAuto)
 	}
+	return gridRow
+}
 
-	// Build a JSON array of TBA-format award models.
-	tbaAwards := make([]TbaPublishedAward, len(awards))
-	for i, award := range awards {
-		tbaAwards[i].Name = award.AwardName
-		tbaAwards[i].TeamKey = getTbaTeam(award.TeamId)
-		tbaAwards[i].Awardee = award.PersonName
+func createTbaGridNode(grid *game.Grid, row int, column int, isAuto bool) string {
+	if isAuto && !grid.AutoScoring[row][column] {
+		return "None"
 	}
-	jsonBody, err := json.Marshal(tbaAwards)
-	if err != nil {
-		return err
+	switch grid.Nodes[row][column] {
+	case game.Cone, game.ConeThenCube, game.TwoCones:
+		return "Cone"
+	case game.Cube, game.CubeThenCone, game.TwoCubes:
+		return "Cube"
+	default:
+		return "None"
 	}
-
-	resp, err := client.postRequest("awards", "update", jsonBody)
-	if err != nil {
-		return err
-	}
-	if resp.StatusCode != 200 {
-		defer resp.Body.Close()
-		body, _ := ioutil.ReadAll(resp.Body)
-		return fmt.Errorf("Got status code %d from TBA: %s", resp.StatusCode, body)
-	}
-	return nil
 }

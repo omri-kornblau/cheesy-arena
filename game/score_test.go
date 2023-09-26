@@ -12,154 +12,175 @@ func TestScoreSummary(t *testing.T) {
 	redScore := TestScore1()
 	blueScore := TestScore2()
 
-	redSummary := redScore.Summarize(blueScore.Fouls)
-	assert.Equal(t, 4, redSummary.TaxiPoints)
-	assert.Equal(t, 7, redSummary.AutoCargoCount)
-	assert.Equal(t, 26, redSummary.AutoCargoPoints)
-	assert.Equal(t, 17, redSummary.CargoCount)
-	assert.Equal(t, 44, redSummary.CargoPoints)
-	assert.Equal(t, 19, redSummary.HangarPoints)
-	assert.Equal(t, 67, redSummary.MatchPoints)
+	redSummary := redScore.Summarize(blueScore)
+	assert.Equal(t, 6, redSummary.MobilityPoints)
+	assert.Equal(t, 36, redSummary.AutoPoints)
+	assert.Equal(t, 52, redSummary.GridPoints)
+	assert.Equal(t, 18, redSummary.ChargeStationPoints)
+	assert.Equal(t, 2, redSummary.ParkPoints)
+	assert.Equal(t, 12, redSummary.EndgamePoints)
+	assert.Equal(t, 78, redSummary.MatchPoints)
 	assert.Equal(t, 0, redSummary.FoulPoints)
-	assert.Equal(t, 67, redSummary.Score)
-	assert.Equal(t, true, redSummary.QuintetAchieved)
-	assert.Equal(t, false, redSummary.CargoBonusRankingPoint)
-	assert.Equal(t, true, redSummary.HangarBonusRankingPoint)
+	assert.Equal(t, 78, redSummary.Score)
+	assert.Equal(t, false, redSummary.CoopertitionBonus)
+	assert.Equal(t, 0, redSummary.NumLinks)
+	assert.Equal(t, 6, redSummary.NumLinksGoal)
+	assert.Equal(t, false, redSummary.SustainabilityBonusRankingPoint)
+	assert.Equal(t, false, redSummary.ActivationBonusRankingPoint)
+	assert.Equal(t, 0, redSummary.BonusRankingPoints)
+	assert.Equal(t, 0, redSummary.NumOpponentTechFouls)
 
-	blueSummary := blueScore.Summarize(redScore.Fouls)
-	assert.Equal(t, 2, blueSummary.TaxiPoints)
-	assert.Equal(t, 4, blueSummary.AutoCargoCount)
-	assert.Equal(t, 14, blueSummary.AutoCargoPoints)
-	assert.Equal(t, 25, blueSummary.CargoCount)
-	assert.Equal(t, 45, blueSummary.CargoPoints)
-	assert.Equal(t, 14, blueSummary.HangarPoints)
-	assert.Equal(t, 61, blueSummary.MatchPoints)
-	assert.Equal(t, 20, blueSummary.FoulPoints)
-	assert.Equal(t, 81, blueSummary.Score)
-	assert.Equal(t, false, blueSummary.QuintetAchieved)
-	assert.Equal(t, true, blueSummary.CargoBonusRankingPoint)
-	assert.Equal(t, false, blueSummary.HangarBonusRankingPoint)
+	blueSummary := blueScore.Summarize(redScore)
+	assert.Equal(t, 3, blueSummary.MobilityPoints)
+	assert.Equal(t, 43, blueSummary.AutoPoints)
+	assert.Equal(t, 154, blueSummary.GridPoints)
+	assert.Equal(t, 30, blueSummary.ChargeStationPoints)
+	assert.Equal(t, 0, blueSummary.ParkPoints)
+	assert.Equal(t, 18, blueSummary.EndgamePoints)
+	assert.Equal(t, 187, blueSummary.MatchPoints)
+	assert.Equal(t, 29, blueSummary.FoulPoints)
+	assert.Equal(t, 216, blueSummary.Score)
+	assert.Equal(t, false, blueSummary.CoopertitionBonus)
+	assert.Equal(t, 9, blueSummary.NumLinks)
+	assert.Equal(t, 6, blueSummary.NumLinksGoal)
+	assert.Equal(t, true, blueSummary.SustainabilityBonusRankingPoint)
+	assert.Equal(t, true, blueSummary.ActivationBonusRankingPoint)
+	assert.Equal(t, 2, blueSummary.BonusRankingPoints)
+	assert.Equal(t, 2, blueSummary.NumOpponentTechFouls)
 
-	// Test invalid foul.
+	// Test that unsetting the team and rule ID don't invalidate the foul.
+	redScore.Fouls[0].TeamId = 0
 	redScore.Fouls[0].RuleId = 0
-	assert.Equal(t, 12, blueScore.Summarize(redScore.Fouls).FoulPoints)
+	assert.Equal(t, 29, blueScore.Summarize(redScore).FoulPoints)
 
-	// Test elimination disqualification.
-	redScore.ElimDq = true
-	assert.Equal(t, 0, redScore.Summarize(blueScore.Fouls).Score)
-	assert.NotEqual(t, 0, blueScore.Summarize(blueScore.Fouls).Score)
-	blueScore.ElimDq = true
-	assert.Equal(t, 0, blueScore.Summarize(redScore.Fouls).Score)
+	// Test playoff disqualification.
+	redScore.PlayoffDq = true
+	assert.Equal(t, 0, redScore.Summarize(blueScore).Score)
+	assert.NotEqual(t, 0, blueScore.Summarize(blueScore).Score)
+	blueScore.PlayoffDq = true
+	assert.Equal(t, 0, blueScore.Summarize(redScore).Score)
 }
 
-func TestScoreCargoBonusRankingPoint(t *testing.T) {
-	var score Score
+func TestScoreSustainabilityBonusRankingPoint(t *testing.T) {
+	redScore := TestScore1()
+	blueScore := TestScore2()
 
-	score.AutoCargoLower[0] = 2
-	summary := score.Summarize([]Foul{})
-	assert.Equal(t, 3, summary.AutoCargoRemaining)
-	assert.Equal(t, 18, summary.TeleopCargoRemaining)
-	assert.Equal(t, false, summary.QuintetAchieved)
-	assert.Equal(t, false, summary.CargoBonusRankingPoint)
+	redScoreSummary := redScore.Summarize(blueScore)
+	blueScoreSummary := blueScore.Summarize(redScore)
+	assert.Equal(t, false, redScoreSummary.CoopertitionBonus)
+	assert.Equal(t, 0, redScoreSummary.NumLinks)
+	assert.Equal(t, 6, redScoreSummary.NumLinksGoal)
+	assert.Equal(t, false, redScoreSummary.SustainabilityBonusRankingPoint)
+	assert.Equal(t, false, blueScoreSummary.CoopertitionBonus)
+	assert.Equal(t, 9, blueScoreSummary.NumLinks)
+	assert.Equal(t, 6, blueScoreSummary.NumLinksGoal)
+	assert.Equal(t, true, blueScoreSummary.SustainabilityBonusRankingPoint)
 
-	score.AutoCargoLower[0] = 17
-	summary = score.Summarize([]Foul{})
-	assert.Equal(t, 0, summary.AutoCargoRemaining)
-	assert.Equal(t, 1, summary.TeleopCargoRemaining)
-	assert.Equal(t, true, summary.QuintetAchieved)
-	assert.Equal(t, false, summary.CargoBonusRankingPoint)
+	// Reduce blue links to 8 and verify that the bonus is still awarded.
+	blueScore.Grid.Nodes[rowBottom][0] = Empty
+	redScoreSummary = redScore.Summarize(blueScore)
+	blueScoreSummary = blueScore.Summarize(redScore)
+	assert.Equal(t, false, redScoreSummary.CoopertitionBonus)
+	assert.Equal(t, 0, redScoreSummary.NumLinks)
+	assert.Equal(t, 6, redScoreSummary.NumLinksGoal)
+	assert.Equal(t, false, redScoreSummary.SustainabilityBonusRankingPoint)
+	assert.Equal(t, false, blueScoreSummary.CoopertitionBonus)
+	assert.Equal(t, 8, blueScoreSummary.NumLinks)
+	assert.Equal(t, 6, blueScoreSummary.NumLinksGoal)
+	assert.Equal(t, true, blueScoreSummary.SustainabilityBonusRankingPoint)
 
-	score.AutoCargoLower[0] = 18
-	summary = score.Summarize([]Foul{})
-	assert.Equal(t, 0, summary.AutoCargoRemaining)
-	assert.Equal(t, 0, summary.TeleopCargoRemaining)
-	assert.Equal(t, true, summary.QuintetAchieved)
-	assert.Equal(t, true, summary.CargoBonusRankingPoint)
+	// Increase non-coopertition threshold to 9.
+	SustainabilityBonusLinkThresholdWithoutCoop = 9
+	redScoreSummary = redScore.Summarize(blueScore)
+	blueScoreSummary = blueScore.Summarize(redScore)
+	assert.Equal(t, false, redScoreSummary.CoopertitionBonus)
+	assert.Equal(t, 0, redScoreSummary.NumLinks)
+	assert.Equal(t, 9, redScoreSummary.NumLinksGoal)
+	assert.Equal(t, false, redScoreSummary.SustainabilityBonusRankingPoint)
+	assert.Equal(t, false, blueScoreSummary.CoopertitionBonus)
+	assert.Equal(t, 8, blueScoreSummary.NumLinks)
+	assert.Equal(t, 9, blueScoreSummary.NumLinksGoal)
+	assert.Equal(t, false, blueScoreSummary.SustainabilityBonusRankingPoint)
 
-	score.AutoCargoLower[0] = 5
-	score.TeleopCargoLower[0] = 12
-	summary = score.Summarize([]Foul{})
-	assert.Equal(t, 0, summary.AutoCargoRemaining)
-	assert.Equal(t, 1, summary.TeleopCargoRemaining)
-	assert.Equal(t, true, summary.QuintetAchieved)
-	assert.Equal(t, false, summary.CargoBonusRankingPoint)
+	// Reduce blue links to 6 and verify that the sustainability bonus is not awarded.
+	blueScore.Grid.Nodes[rowMiddle][0] = Empty
+	blueScore.Grid.Nodes[rowTop][0] = Empty
+	redScoreSummary = redScore.Summarize(blueScore)
+	blueScoreSummary = blueScore.Summarize(redScore)
+	assert.Equal(t, false, redScoreSummary.CoopertitionBonus)
+	assert.Equal(t, 0, redScoreSummary.NumLinks)
+	assert.Equal(t, 9, redScoreSummary.NumLinksGoal)
+	assert.Equal(t, false, redScoreSummary.SustainabilityBonusRankingPoint)
+	assert.Equal(t, false, blueScoreSummary.CoopertitionBonus)
+	assert.Equal(t, 6, blueScoreSummary.NumLinks)
+	assert.Equal(t, 9, blueScoreSummary.NumLinksGoal)
+	assert.Equal(t, false, blueScoreSummary.SustainabilityBonusRankingPoint)
 
-	score.AutoCargoLower[0] = 5
-	score.TeleopCargoLower[0] = 13
-	summary = score.Summarize([]Foul{})
-	assert.Equal(t, 0, summary.AutoCargoRemaining)
-	assert.Equal(t, 0, summary.TeleopCargoRemaining)
-	assert.Equal(t, true, summary.QuintetAchieved)
-	assert.Equal(t, true, summary.CargoBonusRankingPoint)
+	// Make red fulfill the coopertition bonus requirement.
+	redScore.Grid.Nodes[rowBottom][4] = Cone
+	redScoreSummary = redScore.Summarize(blueScore)
+	blueScoreSummary = blueScore.Summarize(redScore)
+	assert.Equal(t, true, redScoreSummary.CoopertitionBonus)
+	assert.Equal(t, 0, redScoreSummary.NumLinks)
+	assert.Equal(t, 5, redScoreSummary.NumLinksGoal)
+	assert.Equal(t, false, redScoreSummary.SustainabilityBonusRankingPoint)
+	assert.Equal(t, true, blueScoreSummary.CoopertitionBonus)
+	assert.Equal(t, 6, blueScoreSummary.NumLinks)
+	assert.Equal(t, 5, blueScoreSummary.NumLinksGoal)
+	assert.Equal(t, true, blueScoreSummary.SustainabilityBonusRankingPoint)
 
-	score.AutoCargoLower[0] = 3
-	score.TeleopCargoLower[0] = 6
-	summary = score.Summarize([]Foul{})
-	assert.Equal(t, 2, summary.AutoCargoRemaining)
-	assert.Equal(t, 11, summary.TeleopCargoRemaining)
-	assert.Equal(t, false, summary.QuintetAchieved)
-	assert.Equal(t, false, summary.CargoBonusRankingPoint)
-
-	score.AutoCargoLower[0] = 4
-	score.TeleopCargoLower[0] = 15
-	summary = score.Summarize([]Foul{})
-	assert.Equal(t, 1, summary.AutoCargoRemaining)
-	assert.Equal(t, 1, summary.TeleopCargoRemaining)
-	assert.Equal(t, false, summary.QuintetAchieved)
-	assert.Equal(t, false, summary.CargoBonusRankingPoint)
-
-	score.AutoCargoLower[0] = 4
-	score.TeleopCargoLower[0] = 16
-	summary = score.Summarize([]Foul{})
-	assert.Equal(t, 1, summary.AutoCargoRemaining)
-	assert.Equal(t, 0, summary.TeleopCargoRemaining)
-	assert.Equal(t, false, summary.QuintetAchieved)
-	assert.Equal(t, true, summary.CargoBonusRankingPoint)
-
-	score.AutoCargoLower[0] = 0
-	score.TeleopCargoLower[0] = 20
-	summary = score.Summarize([]Foul{})
-	assert.Equal(t, 5, summary.AutoCargoRemaining)
-	assert.Equal(t, 0, summary.TeleopCargoRemaining)
-	assert.Equal(t, false, summary.QuintetAchieved)
-	assert.Equal(t, true, summary.CargoBonusRankingPoint)
+	// Reduce coopertition threshold to 1 and make red fulfill the sustainability bonus requirement.
+	SustainabilityBonusLinkThresholdWithCoop = 1
+	redScore.Grid.Nodes[rowBottom][5] = Cube
+	redScoreSummary = redScore.Summarize(blueScore)
+	blueScoreSummary = blueScore.Summarize(redScore)
+	assert.Equal(t, true, redScoreSummary.CoopertitionBonus)
+	assert.Equal(t, 1, redScoreSummary.NumLinks)
+	assert.Equal(t, 1, redScoreSummary.NumLinksGoal)
+	assert.Equal(t, true, redScoreSummary.SustainabilityBonusRankingPoint)
+	assert.Equal(t, true, blueScoreSummary.CoopertitionBonus)
+	assert.Equal(t, 6, blueScoreSummary.NumLinks)
+	assert.Equal(t, 1, blueScoreSummary.NumLinksGoal)
+	assert.Equal(t, true, blueScoreSummary.SustainabilityBonusRankingPoint)
 }
 
-func TestScoreHangarBonusRankingPoint(t *testing.T) {
+func TestScoreActivationBonusRankingPoint(t *testing.T) {
 	var score Score
 
+	score.AutoDockStatuses = [3]bool{true, false, false}
 	score.EndgameStatuses = [3]EndgameStatus{EndgameNone, EndgameNone, EndgameNone}
-	assert.Equal(t, false, score.Summarize([]Foul{}).HangarBonusRankingPoint)
+	assert.Equal(t, false, score.Summarize(&Score{}).ActivationBonusRankingPoint)
 
-	score.EndgameStatuses = [3]EndgameStatus{EndgameLow, EndgameLow, EndgameLow}
-	assert.Equal(t, false, score.Summarize([]Foul{}).HangarBonusRankingPoint)
+	score.AutoDockStatuses = [3]bool{true, false, false}
+	score.EndgameStatuses = [3]EndgameStatus{EndgameDocked, EndgameNone, EndgameDocked}
+	assert.Equal(t, false, score.Summarize(&Score{}).ActivationBonusRankingPoint)
 
-	score.EndgameStatuses = [3]EndgameStatus{EndgameLow, EndgameLow, EndgameMid}
-	assert.Equal(t, false, score.Summarize([]Foul{}).HangarBonusRankingPoint)
+	score.AutoChargeStationLevel = false
+	score.EndgameChargeStationLevel = true
+	assert.Equal(t, true, score.Summarize(&Score{}).ActivationBonusRankingPoint)
 
-	score.EndgameStatuses = [3]EndgameStatus{EndgameMid, EndgameLow, EndgameMid}
-	assert.Equal(t, true, score.Summarize([]Foul{}).HangarBonusRankingPoint)
+	score.AutoChargeStationLevel = true
+	score.EndgameChargeStationLevel = false
+	assert.Equal(t, false, score.Summarize(&Score{}).ActivationBonusRankingPoint)
 
-	score.EndgameStatuses = [3]EndgameStatus{EndgameMid, EndgameLow, EndgameNone}
-	assert.Equal(t, false, score.Summarize([]Foul{}).HangarBonusRankingPoint)
+	ActivationBonusPointThreshold = 30
+	score.AutoChargeStationLevel = true
+	score.EndgameChargeStationLevel = true
+	assert.Equal(t, true, score.Summarize(&Score{}).ActivationBonusRankingPoint)
 
-	score.EndgameStatuses = [3]EndgameStatus{EndgameHigh, EndgameLow, EndgameNone}
-	assert.Equal(t, false, score.Summarize([]Foul{}).HangarBonusRankingPoint)
+	score.AutoChargeStationLevel = false
+	score.EndgameChargeStationLevel = true
+	assert.Equal(t, false, score.Summarize(&Score{}).ActivationBonusRankingPoint)
 
-	score.EndgameStatuses = [3]EndgameStatus{EndgameHigh, EndgameLow, EndgameLow}
-	assert.Equal(t, true, score.Summarize([]Foul{}).HangarBonusRankingPoint)
+	ActivationBonusPointThreshold = 42
+	score.AutoDockStatuses = [3]bool{true, true, true}
+	score.EndgameStatuses = [3]EndgameStatus{EndgameDocked, EndgameDocked, EndgameDocked}
+	score.AutoChargeStationLevel = true
+	score.EndgameChargeStationLevel = true
+	assert.Equal(t, true, score.Summarize(&Score{}).ActivationBonusRankingPoint)
 
-	score.EndgameStatuses = [3]EndgameStatus{EndgameHigh, EndgameMid, EndgameNone}
-	assert.Equal(t, true, score.Summarize([]Foul{}).HangarBonusRankingPoint)
-
-	score.EndgameStatuses = [3]EndgameStatus{EndgameHigh, EndgameNone, EndgameNone}
-	assert.Equal(t, false, score.Summarize([]Foul{}).HangarBonusRankingPoint)
-
-	score.EndgameStatuses = [3]EndgameStatus{EndgameNone, EndgameNone, EndgameTraversal}
-	assert.Equal(t, false, score.Summarize([]Foul{}).HangarBonusRankingPoint)
-
-	score.EndgameStatuses = [3]EndgameStatus{EndgameNone, EndgameLow, EndgameTraversal}
-	assert.Equal(t, true, score.Summarize([]Foul{}).HangarBonusRankingPoint)
+	ActivationBonusPointThreshold = 43
+	assert.Equal(t, false, score.Summarize(&Score{}).ActivationBonusRankingPoint)
 }
 
 func TestScoreEquals(t *testing.T) {
@@ -173,32 +194,32 @@ func TestScoreEquals(t *testing.T) {
 	assert.False(t, score3.Equals(score1))
 
 	score2 = TestScore1()
-	score2.TaxiStatuses[0] = false
+	score2.MobilityStatuses[0] = false
 	assert.False(t, score1.Equals(score2))
 	assert.False(t, score2.Equals(score1))
 
 	score2 = TestScore1()
-	score2.AutoCargoLower[1] = 3
+	score2.Grid.Nodes[rowTop][8] = ConeThenCube
 	assert.False(t, score1.Equals(score2))
 	assert.False(t, score2.Equals(score1))
 
 	score2 = TestScore1()
-	score2.AutoCargoUpper[0] = 7
+	score2.AutoDockStatuses[2] = true
 	assert.False(t, score1.Equals(score2))
 	assert.False(t, score2.Equals(score1))
 
 	score2 = TestScore1()
-	score2.TeleopCargoLower[2] = 30
+	score2.AutoChargeStationLevel = true
 	assert.False(t, score1.Equals(score2))
 	assert.False(t, score2.Equals(score1))
 
 	score2 = TestScore1()
-	score2.TeleopCargoUpper[1] = 31
+	score2.EndgameStatuses[1] = EndgameParked
 	assert.False(t, score1.Equals(score2))
 	assert.False(t, score2.Equals(score1))
 
 	score2 = TestScore1()
-	score2.EndgameStatuses[0] = EndgameNone
+	score2.EndgameChargeStationLevel = false
 	assert.False(t, score1.Equals(score2))
 	assert.False(t, score2.Equals(score1))
 
@@ -208,7 +229,7 @@ func TestScoreEquals(t *testing.T) {
 	assert.False(t, score2.Equals(score1))
 
 	score2 = TestScore1()
-	score2.Fouls[0].RuleId = 1
+	score2.Fouls[0].IsTechnical = false
 	assert.False(t, score1.Equals(score2))
 	assert.False(t, score2.Equals(score1))
 
@@ -218,12 +239,12 @@ func TestScoreEquals(t *testing.T) {
 	assert.False(t, score2.Equals(score1))
 
 	score2 = TestScore1()
-	score2.Fouls[0].TimeInMatchSec += 1
+	score2.Fouls[0].RuleId = 1
 	assert.False(t, score1.Equals(score2))
 	assert.False(t, score2.Equals(score1))
 
 	score2 = TestScore1()
-	score2.ElimDq = !score2.ElimDq
+	score2.PlayoffDq = !score2.PlayoffDq
 	assert.False(t, score1.Equals(score2))
 	assert.False(t, score2.Equals(score1))
 }
