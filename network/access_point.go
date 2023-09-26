@@ -119,7 +119,10 @@ func (ap *AccessPoint) configureTeams(teams [6]*model.Team) {
 
 			command := addConfigurationHeader(config)
 
-			_, err = ap.runCommand(command)
+			fmt.Println(command)
+
+			resp, err := ap.runCommand(command)
+			fmt.Println(resp)
 			if err != nil {
 				log.Printf("Error writing team configuration to AP: %v", err)
 				retryCount++
@@ -213,7 +216,7 @@ func (ap *AccessPoint) runCommand(command string) (string, error) {
 }
 
 func addConfigurationHeader(commandList string) string {
-	return fmt.Sprintf("uci batch <<ENDCONFIG && wifi radio0\n%s\ncommit wireless\nENDCONFIG\n", commandList)
+	return fmt.Sprintf("uci batch <<EOF && wifi up \n%s\ncommit\nEOF\n", commandList)
 }
 
 // Verifies WPA key validity and produces the configuration command for the given team.
