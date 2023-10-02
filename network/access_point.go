@@ -119,8 +119,6 @@ func (ap *AccessPoint) configureTeams(teams [6]*model.Team) {
 
 			command := addConfigurationHeader(config)
 
-			fmt.Println(command)
-
 			_, err = ap.runCommand(command)
 
 			if err != nil {

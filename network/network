@@ -1,0 +1,109 @@
+
+config interface 'loopback'
+	option ifname 'lo'
+	option proto 'static'
+	option ipaddr '127.0.0.1'
+	option netmask '255.0.0.0'
+
+config globals 'globals'
+	option ula_prefix 'fd0c:5c84:42eb::/48'
+
+config interface 'lan'
+	option type 'bridge'
+	option ifname 'eth0.1'
+	option proto 'static'
+	option ipaddr '192.168.1.1'
+	option netmask '255.255.255.0'
+	option ip6assign '60'
+
+config interface 'wan'
+	option proto 'static'
+	option ipaddr '10.0.100.3'
+	option netmask '255.255.255.0'
+	option type 'bridge'
+	option ifname 'eth1'
+	option delegate '0'
+
+config switch
+	option name 'switch0'
+	option reset '1'
+	option enable_vlan '1'
+
+config switch_vlan
+	option device 'switch0'
+	option vlan '1'
+	option ports '5t 3 2 1 0'
+	option vid '1'
+
+config switch_vlan
+	option device 'switch0'
+	option vlan '2'
+	option vid '100'
+	option ports '6 4'
+
+config switch_vlan
+	option device 'switch0'
+	option vlan '4'
+	option vid '40'
+	option ports '6t 4t'
+
+config switch_vlan
+	option device 'switch0'
+	option vlan '5'
+	option vid '50'
+	option ports '6t 4t'
+
+config switch_vlan
+	option device 'switch0'
+	option vlan '6'
+	option vid '60'
+	option ports '6t 4t'
+
+config switch_vlan
+	option device 'switch0'
+	option vlan '7'
+	option vid '20'
+	option ports '6t 4t'
+
+config switch_vlan
+	option device 'switch0'
+	option vlan '8'
+	option vid '30'
+	option ports '6t 4t'
+
+config switch_vlan
+	option device 'switch0'
+	option vlan '9'
+	option vid '10'
+	option ports '6t 4t'
+
+config interface 'vlan10'
+	option proto 'static'
+	option ifname 'eth1.10'
+	option type 'bridge'
+
+config interface 'vlan20'
+        option proto 'static'
+        option ifname 'eth1.20'
+        option type 'bridge'
+
+config interface 'vlan30'
+        option proto 'static'
+        option ifname 'eth1.30'
+        option type 'bridge'
+
+config interface 'vlan40'
+        option proto 'static'
+        option ifname 'eth1.40'
+        option type 'bridge'
+
+config interface 'vlan50'
+        option proto 'static'
+        option ifname 'eth1.50'
+        option type 'bridge'
+
+config interface 'vlan60'
+        option proto 'static'
+        option ifname 'eth1.60'
+        option type 'bridge'
+
