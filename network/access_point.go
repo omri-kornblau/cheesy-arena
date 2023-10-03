@@ -20,10 +20,11 @@ import (
 const (
 	accessPointSshPort                = 22
 	accessPointConnectTimeoutSec      = 1
-	accessPointCommandTimeoutSec      = 5
+	accessPointCommandTimeoutSec      = 15
 	accessPointPollPeriodSec          = 3
 	accessPointRequestBufferSize      = 10
 	accessPointConfigRetryIntervalSec = 5
+	accessPointMaxRetries             = 10
 )
 
 type AccessPoint struct {
@@ -110,6 +111,11 @@ func (ap *AccessPoint) configureTeams(teams [6]*model.Team) {
 	retryCount := 1
 
 	for {
+		if retryCount >= accessPointMaxRetries {
+			log.Printf("Failed config router after %d attempts", accessPointMaxRetries)
+			return
+		}
+
 		teamIndex := 0
 		for teamIndex < 6 {
 			config, err := generateTeamAccessPointConfig(teams[teamIndex], teamIndex+1)
@@ -118,6 +124,11 @@ func (ap *AccessPoint) configureTeams(teams [6]*model.Team) {
 			}
 
 			command := addConfigurationHeader(config)
+			if teams[teamIndex] != nil {
+				log.Printf("Configuring team wifi %d", teams[teamIndex].Id)
+			} else {
+				log.Printf("Configuring test team wifi %d", teamIndex+1)
+			}
 
 			_, err = ap.runCommand(command)
 
@@ -130,12 +141,21 @@ func (ap *AccessPoint) configureTeams(teams [6]*model.Team) {
 
 			teamIndex++
 		}
+
 		time.Sleep(time.Second * accessPointConfigRetryIntervalSec)
+
+		log.Printf("Down Up WIFI")
+		ap.runCommand("wifi up radio0")
+
+		time.Sleep(time.Second * accessPointConfigRetryIntervalSec)
+
 		err := ap.updateTeamWifiStatuses()
 		if err == nil && ap.configIsCorrectForTeams(teams) {
 			log.Printf("Successfully configured WiFi after %d attempts.", retryCount)
+
 			break
 		}
+		retryCount++
 		log.Printf("WiFi configuration still incorrect after %d attempts; trying again.", retryCount)
 	}
 }
@@ -214,7 +234,7 @@ func (ap *AccessPoint) runCommand(command string) (string, error) {
 }
 
 func addConfigurationHeader(commandList string) string {
-	return fmt.Sprintf("uci batch <<ENDCONFIG && wifi up \n%s\ncommit\nENDCONFIG\n", commandList)
+	return fmt.Sprintf("uci batch <<ENDCONFIG && wifi up radio0 \n%s\ncommit\nENDCONFIG\n", commandList)
 }
 
 // Verifies WPA key validity and produces the configuration command for the given team.
