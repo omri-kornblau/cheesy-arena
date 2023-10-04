@@ -103,7 +103,6 @@ func (ap *AccessPoint) handleTeamWifiConfiguration(teams [6]*model.Team) {
 	}
 
 	// Clear the state of the radio before loading teams.
-	// ap.configureTeams([6]*model.Team{nil, nil, nil, nil, nil, nil})
 	ap.configureTeams(teams)
 }
 
