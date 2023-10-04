@@ -157,6 +157,15 @@ func (ap *AccessPoint) configureTeams(teams [6]*model.Team) {
 		if err == nil && ap.configIsCorrectForTeams(teams) {
 			log.Printf("Successfully configured WiFi after %d attempts.", retryCount)
 
+			time.Sleep(time.Second * accessPointConfigRetryIntervalSec)
+
+			_, err := ap.runCommand("wifi up radio0")
+			if err != nil {
+				log.Printf("Failed restarting wifi after successfull configuration")
+			}
+
+			time.Sleep(time.Second * accessPointConfigRetryIntervalSec)
+
 			break
 		}
 		retryCount++

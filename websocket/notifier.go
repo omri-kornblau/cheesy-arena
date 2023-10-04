@@ -6,7 +6,6 @@
 package websocket
 
 import (
-	"log"
 	"sync"
 )
 
@@ -63,7 +62,7 @@ func (notifier *Notifier) notifyListener(listener chan messageEnvelope, message 
 	case listener <- message:
 		// The notification was sent and received successfully.
 	default:
-		log.Printf("Failed to send a '%s' notification due to blocked listener.", notifier.messageType)
+		// log.Printf("Failed to send a '%s' notification due to blocked listener.", notifier.messageType)
 	}
 }
 
