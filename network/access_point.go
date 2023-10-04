@@ -123,14 +123,16 @@ func (ap *AccessPoint) configureTeams(teams [6]*model.Team) {
 				log.Printf("Failed to generate WiFi configuration: %v", err)
 			}
 
-			command := addConfigurationHeader(config)
 			if teams[teamIndex] != nil {
 				log.Printf("Configuring team wifi %d", teams[teamIndex].Id)
 			} else {
 				log.Printf("Configuring test team wifi %d", teamIndex+1)
 			}
 
-			_, err = ap.runCommand(command)
+			_, err = ap.runCommand(config)
+			if err != nil {
+				log.Printf("Error running uci commands: %v", err)
+			}
 
 			if err != nil {
 				log.Printf("Error writing team configuration to AP: %v", err)
@@ -142,14 +144,16 @@ func (ap *AccessPoint) configureTeams(teams [6]*model.Team) {
 			teamIndex++
 		}
 
+		log.Printf("Commiting wireless changes...")
+		_, err := ap.runCommand("uci commit wireless && wifi up radio0")
+		if err != nil {
+			log.Printf("Failed commiting changes: %v", err)
+		}
+
+		// TODO: Replace this sleep with `wifi status` polling
 		time.Sleep(time.Second * accessPointConfigRetryIntervalSec)
 
-		log.Printf("Down Up WIFI")
-		ap.runCommand("wifi up radio0")
-
-		time.Sleep(time.Second * accessPointConfigRetryIntervalSec)
-
-		err := ap.updateTeamWifiStatuses()
+		err = ap.updateTeamWifiStatuses()
 		if err == nil && ap.configIsCorrectForTeams(teams) {
 			log.Printf("Successfully configured WiFi after %d attempts.", retryCount)
 
@@ -245,17 +249,17 @@ func generateTeamAccessPointConfig(team *model.Team, position int) (string, erro
 
 	commands := &[]string{}
 	if team == nil {
-		*commands = append(*commands, fmt.Sprintf("set wireless.@wifi-iface[%d].disabled='0'", position),
-			fmt.Sprintf("set wireless.@wifi-iface[%d].ssid='no-team-%d'", position, position),
-			fmt.Sprintf("set wireless.@wifi-iface[%d].key='no-team-%d'", position, position))
+		*commands = append(*commands, fmt.Sprintf("uci set wireless.@wifi-iface[%d].disabled='0'", position),
+			fmt.Sprintf("uci set wireless.@wifi-iface[%d].ssid='no-team-%d'", position, position),
+			fmt.Sprintf("uci set wireless.@wifi-iface[%d].key='no-team-%d'", position, position))
 	} else {
 		if len(team.WpaKey) < 8 || len(team.WpaKey) > 63 {
 			return "", fmt.Errorf("invalid WPA key '%s' configured for team %d", team.WpaKey, team.Id)
 		}
 
-		*commands = append(*commands, fmt.Sprintf("set wireless.@wifi-iface[%d].disabled='0'", position),
-			fmt.Sprintf("set wireless.@wifi-iface[%d].ssid='%d'", position, team.Id),
-			fmt.Sprintf("set wireless.@wifi-iface[%d].key='%s'", position, team.WpaKey))
+		*commands = append(*commands, fmt.Sprintf("uci set wireless.@wifi-iface[%d].disabled='0'", position),
+			fmt.Sprintf("uci set wireless.@wifi-iface[%d].ssid='%d'", position, team.Id),
+			fmt.Sprintf("uci set wireless.@wifi-iface[%d].key='%s'", position, team.WpaKey))
 	}
 
 	return strings.Join(*commands, "\n"), nil
