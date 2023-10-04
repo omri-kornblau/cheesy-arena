@@ -103,7 +103,7 @@ func (ap *AccessPoint) handleTeamWifiConfiguration(teams [6]*model.Team) {
 	}
 
 	// Clear the state of the radio before loading teams.
-	ap.configureTeams([6]*model.Team{nil, nil, nil, nil, nil, nil})
+	// ap.configureTeams([6]*model.Team{nil, nil, nil, nil, nil, nil})
 	ap.configureTeams(teams)
 }
 
@@ -145,9 +145,15 @@ func (ap *AccessPoint) configureTeams(teams [6]*model.Team) {
 		}
 
 		log.Printf("Commiting wireless changes...")
-		_, err := ap.runCommand("uci commit wireless && wifi up radio0")
+		_, err := ap.runCommand("uci commit wireless")
 		if err != nil {
 			log.Printf("Failed commiting changes: %v", err)
+		}
+		time.Sleep(time.Second)
+
+		_, err = ap.runCommand("wifi up radio0")
+		if err != nil {
+			log.Printf("Failed running wifi up after commit: %v", err)
 		}
 
 		// TODO: Replace this sleep with `wifi status` polling
@@ -157,14 +163,16 @@ func (ap *AccessPoint) configureTeams(teams [6]*model.Team) {
 		if err == nil && ap.configIsCorrectForTeams(teams) {
 			log.Printf("Successfully configured WiFi after %d attempts.", retryCount)
 
-			time.Sleep(time.Second * accessPointConfigRetryIntervalSec)
+			time.Sleep(15 * time.Second)
 
+			log.Printf("Running after success wifi restart...")
 			_, err := ap.runCommand("wifi up radio0")
 			if err != nil {
 				log.Printf("Failed restarting wifi after successfull configuration")
 			}
 
-			time.Sleep(time.Second * accessPointConfigRetryIntervalSec)
+			time.Sleep(25 * time.Second)
+			log.Printf("Wifi should be up!")
 
 			break
 		}
